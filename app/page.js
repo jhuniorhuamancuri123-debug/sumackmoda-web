@@ -30,9 +30,9 @@ export default async function Home() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return (
     <>
+      {/* 1. HERO */}
       <section className="hero">
         <img src="/hero.jpg" alt="SUMACK" className="hero-img" />
-        <div className="hero-overlay" />
         <div className="hero-content">
           <p className="hero-eyebrow">Nueva coleccion</p>
           <h1 className="hero-title">El arte de vestir bien</h1>
@@ -41,11 +41,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="seccion-frase">
-        <p className="frase-principal">SUMACK nacio de la conviccion de que vestir bien es una forma de respeto propio.</p>
-        <span className="frase-sub">Lima, Peru - Moda Masculina Premium</span>
-      </section>
-
+      {/* 2. PRODUCTOS — directo después del hero */}
       <section className="seccion">
         <div className="seccion-header">
           <h2 className="seccion-titulo">Lo mas vendido</h2>
@@ -69,6 +65,13 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* 3. FRASE NEGRA — después de productos */}
+      <section className="seccion-frase">
+        <p className="frase-principal">SUMACK nacio de la conviccion de que vestir bien es una forma de respeto propio.</p>
+        <span className="frase-sub">Lima, Peru - Moda Masculina Premium</span>
+      </section>
+
+      {/* 4. BANNER */}
       <section className="banner-medio">
         <img src="/hero.jpg" alt="Elegancia atemporal" className="banner-img" />
         <div className="banner-overlay" />
@@ -78,6 +81,7 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* 5. QUOTE FINAL */}
       <section className="seccion-quote">
         <p className="quote-texto">Vestir bien no es vanidad. Es presencia, criterio y respeto propio.</p>
         <Link href="/catalogo" className="btn-outline">Explorar coleccion</Link>
