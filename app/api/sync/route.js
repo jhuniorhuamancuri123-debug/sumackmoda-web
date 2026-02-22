@@ -1,4 +1,4 @@
-import { alegraClient, parseCodigo } from '../../lib/sync';
+import { alegraClient, parseCodigo } from '../../lib/alegra';
 import { supabase } from '../../lib/supabase';
 
 const ALMACEN_9NO = "1";
