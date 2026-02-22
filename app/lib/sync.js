@@ -40,12 +40,16 @@ export async function syncProductos() {
   const items = await getAllAlegraItems();
   console.log(`Total items encontrados en Alegra: ${items.length}`);
 
+  const modelosMap = {};
+  const coloresMap = {};
+  const productosData = [];
+
+  // Preparar todos los datos primero sin tocar Supabase
   for (const item of items) {
     const partes = parseCodigo(item.reference);
     if (!partes) continue;
 
     const { cod_modelo, cod_color, cod_talla } = partes;
-
     const nombreParts = item.name.split(' / ');
     const nombre_modelo = nombreParts[0]?.trim() || cod_modelo;
     const nombre_color = nombreParts[1]?.trim() || cod_color;
@@ -55,17 +59,10 @@ export async function syncProductos() {
     const stock_total = stock_9no + stock_6to;
     const precio = getPrecioTotal(item);
 
-    await supabase.from('modelos').upsert(
-      { cod_modelo, nombre_modelo },
-      { onConflict: 'cod_modelo' }
-    );
+    modelosMap[cod_modelo] = { cod_modelo, nombre_modelo };
+    coloresMap[cod_color] = { cod_color, nombre_color };
 
-    await supabase.from('colores').upsert(
-      { cod_color, nombre_color },
-      { onConflict: 'cod_color' }
-    );
-
-    await supabase.from('productos').upsert({
+    productosData.push({
       id: String(item.id),
       cod_modelo,
       cod_color,
@@ -78,7 +75,25 @@ export async function syncProductos() {
       stock_6to,
       activo: true,
       ultima_sync: new Date().toISOString(),
-    }, { onConflict: 'id' });
+    });
+  }
+
+  // Insertar modelos en un solo batch
+  const modelosArray = Object.values(modelosMap);
+  await supabase.from('modelos').upsert(modelosArray, { onConflict: 'cod_modelo' });
+  console.log(`Modelos sincronizados: ${modelosArray.length}`);
+
+  // Insertar colores en un solo batch
+  const coloresArray = Object.values(coloresMap);
+  await supabase.from('colores').upsert(coloresArray, { onConflict: 'cod_color' });
+  console.log(`Colores sincronizados: ${coloresArray.length}`);
+
+  // Insertar productos en lotes de 500
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < productosData.length; i += BATCH_SIZE) {
+    const lote = productosData.slice(i, i + BATCH_SIZE);
+    await supabase.from('productos').upsert(lote, { onConflict: 'id' });
+    console.log(`Productos sincronizados: ${i + lote.length} / ${productosData.length}`);
   }
 
   console.log('Sincronización completada.');
