@@ -1,5 +1,6 @@
-﻿import { supabase } from './lib/supabase';
 import Link from 'next/link';
+import { supabase } from './lib/supabase';
+import ProductoImg from './components/ProductoImg';
 
 export const revalidate = 1800;
 
@@ -12,7 +13,6 @@ async function getProductosDestacados() {
     .limit(20);
 
   if (!data) return [];
-
   const modelosVistos = new Set();
   const destacados = [];
   for (const p of data) {
@@ -27,6 +27,7 @@ async function getProductosDestacados() {
 
 export default async function Home() {
   const destacados = await getProductosDestacados();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return (
     <>
       <section className="hero">
@@ -42,7 +43,7 @@ export default async function Home() {
 
       <section className="seccion-frase">
         <p className="frase-principal">SUMACK nacio de la conviccion de que vestir bien es una forma de respeto propio.</p>
-        <span className="frase-sub">Lima, Peru — Moda Masculina Premium</span>
+        <span className="frase-sub">Lima, Peru - Moda Masculina Premium</span>
       </section>
 
       <section className="seccion">
@@ -54,11 +55,10 @@ export default async function Home() {
           {destacados.map((p) => (
             <Link key={p.id} href={"/catalogo/" + p.cod_modelo} className="producto-card">
               <div className="producto-img-wrap">
-                <img
-                  src={process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/productos/" + p.cod_modelo + "/" + p.cod_color + ".jpg"}
+                <ProductoImg
+                  src={supabaseUrl + "/storage/v1/object/public/productos/" + p.cod_modelo + "/" + p.cod_color + ".jpg"}
                   alt={p.nombre}
-                  style={{width:"100%",height:"100%",objectFit:"cover"}}
-                  onError={(e) => { e.target.style.display="none"; e.target.parentNode.innerHTML="<div class='producto-placeholder'>SUMACK</div>"; }}
+                  hexColor="#e8e4dc"
                 />
                 {p.stock === 0 && <span className="producto-badge agotado">Agotado</span>}
               </div>
