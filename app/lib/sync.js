@@ -1,6 +1,9 @@
 import { alegraClient, parseCodigo } from './alegra';
 import { supabase } from './supabase';
 
+const ALMACEN_9NO = "1";
+const ALMACEN_6TO = "2";
+
 async function getAllAlegraItems() {
   let allItems = [];
   let start = 0;
@@ -18,9 +21,22 @@ async function getAllAlegraItems() {
   return allItems;
 }
 
+function getStockPorAlmacen(item, almacenId) {
+  if (!item.inventory?.warehouses) return 0;
+  const almacen = item.inventory.warehouses.find(
+    w => String(w.id) === String(almacenId)
+  );
+  return almacen?.availableQuantity || 0;
+}
+
+function getPrecioTotal(item) {
+  const precioTotal = item.price?.find(p => p.name === 'TOTAL');
+  if (precioTotal) return precioTotal.price;
+  return item.price?.[0]?.price || 0;
+}
+
 export async function syncProductos() {
   console.log('Iniciando sincronización con Alegra...');
-
   const items = await getAllAlegraItems();
   console.log(`Total items encontrados en Alegra: ${items.length}`);
 
@@ -33,6 +49,11 @@ export async function syncProductos() {
     const nombreParts = item.name.split(' / ');
     const nombre_modelo = nombreParts[0]?.trim() || cod_modelo;
     const nombre_color = nombreParts[1]?.trim() || cod_color;
+
+    const stock_9no = getStockPorAlmacen(item, ALMACEN_9NO);
+    const stock_6to = getStockPorAlmacen(item, ALMACEN_6TO);
+    const stock_total = stock_9no + stock_6to;
+    const precio = getPrecioTotal(item);
 
     await supabase.from('modelos').upsert(
       { cod_modelo, nombre_modelo },
@@ -51,8 +72,10 @@ export async function syncProductos() {
       cod_talla,
       nombre: item.name,
       codigo: item.reference,
-      precio: item.price?.[0]?.price || 0,
-      stock: item.inventory?.availableQuantity || 0,
+      precio,
+      stock: stock_total,
+      stock_9no,
+      stock_6to,
       activo: true,
       ultima_sync: new Date().toISOString(),
     }, { onConflict: 'id' });
