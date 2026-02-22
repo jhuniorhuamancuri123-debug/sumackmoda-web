@@ -8,12 +8,12 @@ const TALLAS_ORDEN = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export default function ProductoPage({ params }) {
   const { slug } = use(params);
-  const [variantes, setVariantes] = useState([]);
   const [colores, setColores] = useState([]);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
-  const [tallasDisponibles, setTallasDisponibles] = useState([]);
-  const [preciosTalla, setPreciosTalla] = useState({});
+  const [tallasInfo, setTallasInfo] = useState([]);
+  const [itemSeleccionado, setItemSeleccionado] = useState(null);
+  const [nombreModelo, setNombreModelo] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Buscando producto...');
   const [noEncontrado, setNoEncontrado] = useState(false);
@@ -26,14 +26,16 @@ export default function ProductoPage({ params }) {
 
   useEffect(() => {
     if (!colorSeleccionado) return;
-    const tallas = variantes
-      .filter(v => v.cod_color === colorSeleccionado && v.stock_disponible > 0)
-      .map(v => v.cod_talla)
-      .sort((a, b) => TALLAS_ORDEN.indexOf(a) - TALLAS_ORDEN.indexOf(b));
-    setTallasDisponibles(tallas);
+    cargarTallas(colorSeleccionado);
     setTallaSeleccionada(null);
+    setItemSeleccionado(null);
     setImgError(false);
-  }, [colorSeleccionado, variantes]);
+  }, [colorSeleccionado]);
+
+  useEffect(() => {
+    if (!tallaSeleccionada || !colorSeleccionado) return;
+    cargarItem(colorSeleccionado, tallaSeleccionada);
+  }, [tallaSeleccionada]);
 
   async function cargarProducto() {
     try {
@@ -41,89 +43,42 @@ export default function ProductoPage({ params }) {
       setLoading(true);
       const codModelo = slug.toUpperCase();
 
-      setLoadingMsg('Cargando información...');
-
-      // Cargar modelo
-      const { data: modeloData } = await supabase
-        .from('modelos')
-        .select('nombre, nombre_modelo')
+      // Cargar todos los items de este modelo con stock > 0
+      setLoadingMsg('Cargando colores disponibles...');
+      const { data } = await supabase
+        .from('productos')
+        .select('cod_modelo, cod_color, cod_talla, nombre, precio, stock')
         .eq('cod_modelo', codModelo)
-        .single();
+        .gt('stock', 0);
 
-      if (!modeloData) {
+      if (!data || data.length === 0) {
         setNoEncontrado(true);
         setLoading(false);
         return;
       }
 
-      // Cargar precios por talla — nueva tabla
-      const { data: preciosData } = await supabase
-        .from('precios')
-        .select('cod_talla, precio')
-        .eq('cod_modelo', codModelo);
+      // Nombre del modelo
+      const nombre = data[0].nombre.split(' / ')[0]?.trim() || codModelo;
+      setNombreModelo(nombre);
 
-      // Armar mapa de precios por talla
-      const preciosMap = {};
-      let precioFallback = 0;
-      if (preciosData && preciosData.length > 0) {
-        for (const p of preciosData) {
-          preciosMap[p.cod_talla] = Number(p.precio);
-        }
-        // Fallback: precio más bajo disponible
-        precioFallback = Math.min(...Object.values(preciosMap));
-      } else {
-        // Si no hay precios en tabla nueva, buscar en productos
-        const { data: prodData } = await supabase
-          .from('productos')
-          .select('precio')
-          .eq('cod_modelo', codModelo)
-          .limit(1)
-          .single();
-        precioFallback = prodData?.precio || 0;
-      }
-      setPreciosTalla(preciosMap);
-
-      // Cargar stock con colores
-      setLoadingMsg('Verificando stock disponible...');
-      const { data: stockData } = await supabase
-        .from('stock')
-        .select('cod_color, cod_talla, stock_disponible, colores(nombre_color, hex_color)')
-        .eq('cod_modelo', codModelo)
-        .gt('stock_disponible', 0);
-
-      if (!stockData || stockData.length === 0) {
-        setNoEncontrado(true);
-        setLoading(false);
-        return;
-      }
-
-      const variantesArmadas = stockData.map(v => ({
-        id: `${codModelo}-${v.cod_color}-${v.cod_talla}`,
-        cod_modelo: codModelo,
-        cod_color: v.cod_color,
-        cod_talla: v.cod_talla,
-        stock_disponible: v.stock_disponible,
-        nombre: modeloData.nombre || modeloData.nombre_modelo,
-        precio: preciosMap[v.cod_talla] || precioFallback,
-        nombre_color: v.colores?.nombre_color || v.cod_color,
-        hex_color: v.colores?.hex_color || '#CCCCCC',
-      }));
-
-      setVariantes(variantesArmadas);
-
+      // Colores únicos con stock
       const coloresMap = new Map();
-      for (const v of variantesArmadas) {
-        if (!coloresMap.has(v.cod_color)) {
-          coloresMap.set(v.cod_color, {
-            cod_color: v.cod_color,
-            nombre_color: v.nombre_color,
-            hex_color: v.hex_color,
+      for (const item of data) {
+        if (!coloresMap.has(item.cod_color)) {
+          const nombreColor = item.nombre.split(' / ')[1]?.trim() || item.cod_color;
+          coloresMap.set(item.cod_color, {
+            cod_color: item.cod_color,
+            nombre_color: nombreColor,
+            hex_color: '#CCCCCC',
           });
         }
       }
       const coloresArray = Array.from(coloresMap.values());
       setColores(coloresArray);
-      setColorSeleccionado(coloresArray[0]?.cod_color || null);
+
+      // Seleccionar primer color
+      const primerColor = coloresArray[0]?.cod_color;
+      setColorSeleccionado(primerColor);
 
     } catch (err) {
       console.error(err);
@@ -133,18 +88,57 @@ export default function ProductoPage({ params }) {
     }
   }
 
+  async function cargarTallas(codColor) {
+    const codModelo = slug.toUpperCase();
+    const { data } = await supabase
+      .from('productos')
+      .select('cod_talla, stock, precio')
+      .eq('cod_modelo', codModelo)
+      .eq('cod_color', codColor);
+
+    if (!data) return;
+
+    // Todas las tallas del modelo+color con su estado
+    const tallasData = TALLAS_ORDEN.map(t => {
+      const item = data.find(d => d.cod_talla === t);
+      return {
+        talla: t,
+        stock: item?.stock || 0,
+        precio: item?.precio || 0,
+        disponible: item ? item.stock > 0 : false,
+        existe: !!item,
+      };
+    }).filter(t => t.existe); // Solo mostrar tallas que existen para este modelo
+
+    setTallasInfo(tallasData);
+  }
+
+  async function cargarItem(codColor, codTalla) {
+    const codModelo = slug.toUpperCase();
+    const { data } = await supabase
+      .from('productos')
+      .select('*')
+      .eq('cod_modelo', codModelo)
+      .eq('cod_color', codColor)
+      .eq('cod_talla', codTalla)
+      .single();
+
+    setItemSeleccionado(data || null);
+  }
+
   function handleAgregar() {
-    if (!productoSeleccionado) return;
+    if (!itemSeleccionado || itemSeleccionado.stock <= 0) return;
     setAgregando(true);
+    const colorActual = colores.find(c => c.cod_color === colorSeleccionado);
     agregar({
-      id: productoSeleccionado.id,
+      id: itemSeleccionado.id,
       nombre: nombreModelo,
-      precio: precioActual,
-      color: colores.find(c => c.cod_color === colorSeleccionado)?.nombre_color || colorSeleccionado,
+      precio: Number(itemSeleccionado.precio),
+      color: colorActual?.nombre_color || colorSeleccionado,
       talla: tallaSeleccionada,
-      stockMax: productoSeleccionado.stock_disponible,
+      stockMax: itemSeleccionado.stock,
       imagen: imgError ? null : imgUrl,
-      hexColor: colores.find(c => c.cod_color === colorSeleccionado)?.hex_color || '#e8e4dc',
+      hexColor: colorActual?.hex_color || '#e8e4dc',
     });
     toast.success(`¡${nombreModelo} agregado al carrito!`);
     setTimeout(() => setAgregando(false), 1500);
@@ -196,31 +190,17 @@ export default function ProductoPage({ params }) {
     </div>
   );
 
-  const nombreModelo = variantes[0]?.nombre?.split(' / ')[0]?.trim() || slug;
-  const codModelo = variantes[0]?.cod_modelo;
+  const codModelo = slug.toUpperCase();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
   const imgUrl = colorSeleccionado
     ? `${supabaseUrl}/storage/v1/object/public/productos/${codModelo}/${colorSeleccionado}.jpg`
     : null;
 
-  const productoSeleccionado = tallaSeleccionada && colorSeleccionado
-    ? variantes.find(v => v.cod_color === colorSeleccionado && v.cod_talla === tallaSeleccionada)
-    : null;
-
-  // Precio dinámico: si hay talla seleccionada muestra su precio, si no muestra el mínimo
-  const precioActual = tallaSeleccionada
-    ? (preciosTalla[tallaSeleccionada] || variantes[0]?.precio || 0)
-    : Math.min(...Object.values(preciosTalla).length > 0
-        ? Object.values(preciosTalla)
-        : [variantes[0]?.precio || 0]);
-
-  const stockActual = productoSeleccionado?.stock_disponible || 0;
   const colorActual = colores.find(c => c.cod_color === colorSeleccionado);
-
-  // Verificar si hay múltiples precios (para mostrar "Desde")
-  const preciosUnicos = [...new Set(Object.values(preciosTalla))];
-  const hayMultiplesPrecios = preciosUnicos.length > 1;
+  const precioActual = itemSeleccionado?.precio
+    || tallasInfo.find(t => t.disponible)?.precio
+    || 0;
+  const hayMultiplesPrecios = [...new Set(tallasInfo.map(t => t.precio))].length > 1;
 
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh' }}>
@@ -250,7 +230,7 @@ export default function ProductoPage({ params }) {
               SUMACK
             </div>
           )}
-          {stockActual > 0 && stockActual <= 3 && (
+          {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
             <div style={{
               position: 'absolute', top: '1rem', left: '1rem',
               background: '#c0392b', color: '#fff',
@@ -258,7 +238,7 @@ export default function ProductoPage({ params }) {
               letterSpacing: '0.1em', textTransform: 'uppercase',
               padding: '0.4rem 0.75rem',
             }}>
-              ¡Últimas {stockActual} unidades!
+              ¡Últimas {itemSeleccionado.stock} unidades!
             </div>
           )}
         </div>
@@ -280,7 +260,6 @@ export default function ProductoPage({ params }) {
             }}>
               {nombreModelo}
             </h1>
-            {/* PRECIO DINÁMICO POR TALLA */}
             <p style={{
               fontFamily: 'var(--font-body)', fontSize: '1.4rem',
               fontWeight: 600, color: 'var(--marron)',
@@ -293,7 +272,7 @@ export default function ProductoPage({ params }) {
                 fontFamily: 'var(--font-body)', fontSize: '0.78rem',
                 color: 'var(--gris)', marginTop: '0.25rem',
               }}>
-                El precio varía según la talla seleccionada
+                El precio varía según la talla
               </p>
             )}
           </div>
@@ -311,13 +290,18 @@ export default function ProductoPage({ params }) {
                 <button key={c.cod_color} title={c.nombre_color}
                   onClick={() => setColorSeleccionado(c.cod_color)}
                   style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
-                    background: c.hex_color,
-                    border: colorSeleccionado === c.cod_color ? '3px solid var(--negro)' : '2px solid transparent',
-                    outline: colorSeleccionado === c.cod_color ? '2px solid var(--negro)' : '2px solid var(--gris-claro)',
-                    outlineOffset: '2px', cursor: 'pointer', transition: 'all 0.2s',
-                  }}
-                />
+                    padding: '0.4rem 0.75rem',
+                    border: colorSeleccionado === c.cod_color
+                      ? '2px solid var(--negro)'
+                      : '1px solid var(--gris-claro)',
+                    background: colorSeleccionado === c.cod_color ? 'var(--negro)' : 'transparent',
+                    color: colorSeleccionado === c.cod_color ? 'var(--blanco)' : 'var(--negro)',
+                    fontFamily: 'var(--font-body)', fontSize: '0.8rem',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    letterSpacing: '0.05em',
+                  }}>
+                  {c.nombre_color}
+                </button>
               ))}
             </div>
           </div>
@@ -340,42 +324,64 @@ export default function ProductoPage({ params }) {
               </a>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {TALLAS_ORDEN.map(t => {
-                const disponible = tallasDisponibles.includes(t);
-                const seleccionada = tallaSeleccionada === t;
-                const precioDeTalla = preciosTalla[t];
+              {tallasInfo.map(({ talla, disponible, precio }) => {
+                const seleccionada = tallaSeleccionada === talla;
                 return (
-                  <button key={t}
-                    onClick={() => disponible && setTallaSeleccionada(t)}
+                  <button key={talla}
+                    onClick={() => disponible && setTallaSeleccionada(talla)}
                     disabled={!disponible}
-                    title={precioDeTalla ? `S/. ${Number(precioDeTalla).toFixed(2)}` : ''}
+                    title={disponible ? `S/. ${Number(precio).toFixed(2)}` : 'Agotado'}
                     style={{
-                      width: '48px', height: '48px',
+                      minWidth: '48px', height: '48px',
+                      padding: '0 0.5rem',
                       border: seleccionada ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
-                      background: seleccionada ? 'var(--negro)' : 'transparent',
-                      color: seleccionada ? 'var(--blanco)' : disponible ? 'var(--negro)' : 'var(--gris-claro)',
+                      background: seleccionada ? 'var(--negro)' : !disponible ? '#f5f5f5' : 'transparent',
+                      color: seleccionada ? 'var(--blanco)' : !disponible ? 'var(--gris-claro)' : 'var(--negro)',
                       fontFamily: 'var(--font-body)', fontSize: '0.85rem',
                       cursor: disponible ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s',
+                      transition: 'all 0.2s', position: 'relative',
                       textDecoration: !disponible ? 'line-through' : 'none',
                     }}>
-                    {t}
+                    {talla}
+                    {!disponible && (
+                      <span style={{
+                        position: 'absolute', bottom: '2px', right: '2px',
+                        fontSize: '0.45rem', color: '#c0392b', letterSpacing: 0,
+                      }}>✕</span>
+                    )}
                   </button>
                 );
               })}
             </div>
+            {tallasInfo.length > 0 && tallasInfo.every(t => !t.disponible) && (
+              <p style={{
+                fontFamily: 'var(--font-body)', fontSize: '0.82rem',
+                color: '#c0392b', marginTop: '0.5rem',
+              }}>
+                Agotado en este color — elige otro color
+              </p>
+            )}
           </div>
 
           {/* Botón agregar */}
           <button onClick={handleAgregar}
-            disabled={!productoSeleccionado || agregando}
+            disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
             style={{
               width: '100%', padding: '1rem',
-              background: agregando ? 'var(--marron)' : productoSeleccionado ? 'var(--negro)' : 'var(--gris-claro)',
-              color: productoSeleccionado || agregando ? 'var(--blanco)' : 'var(--gris)',
+              background: agregando
+                ? 'var(--marron)'
+                : itemSeleccionado && itemSeleccionado.stock > 0
+                ? 'var(--negro)'
+                : 'var(--gris-claro)',
+              color: itemSeleccionado && itemSeleccionado.stock > 0 || agregando
+                ? 'var(--blanco)'
+                : 'var(--gris)',
               fontFamily: 'var(--font-body)', fontSize: '0.85rem',
               fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-              border: 'none', cursor: productoSeleccionado && !agregando ? 'pointer' : 'not-allowed',
+              border: 'none',
+              cursor: itemSeleccionado && itemSeleccionado.stock > 0 && !agregando
+                ? 'pointer'
+                : 'not-allowed',
               transition: 'all 0.3s',
             }}>
             {agregando
@@ -384,6 +390,8 @@ export default function ProductoPage({ params }) {
               ? 'Selecciona un color'
               : !tallaSeleccionada
               ? 'Selecciona una talla'
+              : itemSeleccionado?.stock <= 0
+              ? 'Agotado'
               : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
           </button>
 
@@ -403,7 +411,7 @@ export default function ProductoPage({ params }) {
           </div>
 
           {/* WhatsApp */}
-          <a href={`https://wa.me/51968267313?text=Hola%2C%20me%20interesa%20el%20producto%20*${encodeURIComponent(nombreModelo)}*%20(${codModelo})`}
+          <a href={`https://wa.me/51968267313?text=Hola%2C%20me%20interesa%20*${encodeURIComponent(nombreModelo)}*`}
             target="_blank" rel="noopener"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -421,7 +429,6 @@ export default function ProductoPage({ params }) {
             </svg>
             Consultar por WhatsApp
           </a>
-
         </div>
       </div>
 
