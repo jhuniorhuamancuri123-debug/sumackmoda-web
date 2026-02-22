@@ -32,10 +32,30 @@ body { font-family: var(--font-body); background: var(--blanco); color: var(--ne
 .icon-btn:hover { color: var(--marron); }
 .carrito-count { position: absolute; top: -2px; right: -4px; background: var(--marron); color: white; font-size: 0.6rem; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
 
-.hero { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 64px); margin-top: 64px; }
-.hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100vh - 64px);
+  margin-top: 64px;
+  max-height: 800px;
+}
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left top;
+  display: block;
+  }
 .hero-overlay { display: none; }
-.hero-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 4rem 5rem; background: var(--blanco); animation: fadeUp 1s ease forwards; }
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4rem 5rem;
+  background: var(--blanco);
+  animation: fadeUp 1s ease forwards;
+}
 .hero-eyebrow { font-family: var(--font-body); font-size: 0.8rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gris); margin-bottom: 1rem; }
 .hero-title { font-family: var(--font-display); font-size: clamp(3rem, 5vw, 5rem); font-weight: 900; line-height: 1.0; color: var(--negro); margin-bottom: 1.5rem; letter-spacing: -0.02em; }
 .hero-subtitle { font-family: var(--font-body); font-size: 1rem; color: var(--negro); margin-bottom: 1rem; max-width: 400px; line-height: 1.7; }
