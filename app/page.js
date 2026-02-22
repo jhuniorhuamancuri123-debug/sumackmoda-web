@@ -5,10 +5,3 @@ export default function Home() {
     </main>
   );
 }
-```
-
-Guarda con **Ctrl+S** luego en la terminal:
-```
-git add .
-git commit -m "Pagina inicio base"
-git push
