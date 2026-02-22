@@ -58,8 +58,8 @@ export default function CarritoPanel() {
                   )}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontFamily:'var(--font-display)',fontSize:'0.9rem',fontWeight:700,marginBottom:'0.2rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{item.nombre}</p>
-                  <p style={{fontFamily:'var(--font-body)',fontSize:'0.8rem',color:'var(--gris)',marginBottom:'0.4rem'}}>{item.color} / Talla {item.talla}</p>
+                  <p style={{fontFamily:'var(--font-display)',fontSize:'1rem',fontWeight:700,marginBottom:'0.2rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{item.nombre}</p>
+                  <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--gris)',marginBottom:'0.4rem'}}>{item.color} / Talla {item.talla}</p>
                   <p style={{fontFamily:'var(--font-body)',fontSize:'0.95rem',color:'var(--marron)',fontWeight:600}}>S/. {Number(item.precio).toFixed(2)}</p>
                   <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginTop:'0.6rem'}}>
                     <button onClick={() => cambiarCantidad(item.itemId, item.cantidad - 1)}
@@ -88,13 +88,23 @@ export default function CarritoPanel() {
               <span style={{fontFamily:'var(--font-body)',fontSize:'1.2rem',fontWeight:700,color:'var(--marron)'}}>S/. {Number(total).toFixed(2)}</span>
             </div>
             <a href="/checkout"
-              style={{display:'block',width:'100%',padding:'1rem',background:'var(--negro)',color:'var(--blanco)',fontFamily:'var(--font-body)',fontSize:'0.85rem',fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',textAlign:'center',transition:'background 0.3s'}}
+              style={{
+                display:'block', width:'100%', padding:'1.1rem',
+                background:'var(--negro)', color:'var(--blanco)',
+                fontFamily:'var(--font-body)', fontSize:'1rem',
+                fontWeight:700, letterSpacing:'0.15em', textTransform:'uppercase',
+                textDecoration:'none', textAlign:'center', transition:'background 0.3s',
+              }}
               onMouseEnter={e => e.currentTarget.style.background='var(--marron)'}
               onMouseLeave={e => e.currentTarget.style.background='var(--negro)'}>
-              Ir a pagar
+              Confirmar pedido →
             </a>
-            <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',color:'var(--gris)',textAlign:'center',marginTop:'0.75rem'}}>
-              El envío se coordina al confirmar el pedido
+            <p style={{
+              fontFamily:'var(--font-body)', fontSize:'0.82rem',
+              color:'var(--gris)', textAlign:'center', marginTop:'0.75rem',
+              lineHeight: 1.5,
+            }}>
+              Revisa tu pedido y cierra la venta por WhatsApp
             </p>
           </div>
         )}

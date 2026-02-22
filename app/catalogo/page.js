@@ -7,7 +7,7 @@ const TALLAS = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export default function CatalogoPage() {
   const [productos, setProductos] = useState([]);
-  const [tallaFiltro, setTallaFiltro] = useState(null);
+  const [tallaFiltro, setTallaFiltro] = useState('S');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,14 +51,15 @@ export default function CatalogoPage() {
       }}>
         <div style={{
           background: 'var(--crema)',
-          borderLeft: '3px solid var(--marron)',
-          padding: '0.75rem 1rem',
+          borderLeft: '4px solid var(--marron)',
+          padding: '1rem 1.25rem',
           fontFamily: 'var(--font-body)',
-          fontSize: '0.82rem',
+          fontSize: '1rem',
+          fontWeight: 600,
           color: 'var(--negro)',
           lineHeight: 1.6,
         }}>
-          💡 <strong>Los precios varían según la talla.</strong> Filtra por tu talla para ver los modelos disponibles y el precio exacto en cada producto.
+          💡 Los precios varían según la talla — selecciona tu talla para ver disponibilidad y precio exacto.
         </div>
       </div>
 
