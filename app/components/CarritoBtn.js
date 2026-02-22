@@ -1,10 +1,3 @@
-export default function CarritoBtn() 
-{
-  const carrito = useCarrito();
-  if (!carrito) return null;
-  const { totalItems, setAbierto } = carrito;
-  // ... resto igual
-}
 'use client';
 import { useCarrito } from '../context/CarritoContext';
 

@@ -1,16 +1,4 @@
-export default function CarritoPanel() {
-  const carritoContext = useCarrito();
-  const toastContext = useToast();
-  
-  if (!carritoContext || !toastContext) return null;
-  
-  const { items, quitar, cambiarCantidad, total, totalItems, abierto, setAbierto, cargado } = carritoContext;
-  const toast = toastContext;
-  
-  if (!cargado) return null;
-  // ... resto igual
-  }
-  'use client';
+'use client';
 import { useCarrito } from '../context/CarritoContext';
 import { useToast } from '../context/ToastContext';
 
@@ -44,14 +32,12 @@ export default function CarritoPanel() {
         display:'flex', flexDirection:'column',
         boxShadow:'-4px 0 30px rgba(0,0,0,0.15)',
       }}>
-
         <div style={{padding:'1.5rem 2rem',borderBottom:'1px solid var(--gris-claro)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <h2 style={{fontFamily:'var(--font-display)',fontSize:'1.2rem',fontWeight:700,letterSpacing:'0.02em'}}>
             Tu carrito {totalItems > 0 && `(${totalItems})`}
           </h2>
           <button onClick={() => setAbierto(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.5rem',color:'var(--negro)',padding:'0.25rem',lineHeight:1}}>×</button>
         </div>
-
         <div style={{flex:1,overflowY:'auto',padding:'1rem 2rem'}}>
           {items.length === 0 ? (
             <div style={{textAlign:'center',paddingTop:'4rem'}}>
@@ -95,7 +81,6 @@ export default function CarritoPanel() {
             ))
           )}
         </div>
-
         {items.length > 0 && (
           <div style={{padding:'1.5rem 2rem',borderTop:'1px solid var(--gris-claro)'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem'}}>
