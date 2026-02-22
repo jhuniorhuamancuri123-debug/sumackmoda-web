@@ -13,6 +13,7 @@ export default function ProductoPage({ params }) {
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [tallasDisponibles, setTallasDisponibles] = useState([]);
+  const [preciosTalla, setPreciosTalla] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState('Buscando producto...');
   const [noEncontrado, setNoEncontrado] = useState(false);
@@ -41,9 +42,11 @@ export default function ProductoPage({ params }) {
       const codModelo = slug.toUpperCase();
 
       setLoadingMsg('Cargando información...');
+
+      // Cargar modelo
       const { data: modeloData } = await supabase
         .from('modelos')
-        .select('nombre')
+        .select('nombre, nombre_modelo')
         .eq('cod_modelo', codModelo)
         .single();
 
@@ -53,12 +56,34 @@ export default function ProductoPage({ params }) {
         return;
       }
 
-      const { data: precioData } = await supabase
+      // Cargar precios por talla — nueva tabla
+      const { data: preciosData } = await supabase
         .from('precios')
-        .select('precio')
-        .eq('cod_modelo', codModelo)
-        .single();
+        .select('cod_talla, precio')
+        .eq('cod_modelo', codModelo);
 
+      // Armar mapa de precios por talla
+      const preciosMap = {};
+      let precioFallback = 0;
+      if (preciosData && preciosData.length > 0) {
+        for (const p of preciosData) {
+          preciosMap[p.cod_talla] = Number(p.precio);
+        }
+        // Fallback: precio más bajo disponible
+        precioFallback = Math.min(...Object.values(preciosMap));
+      } else {
+        // Si no hay precios en tabla nueva, buscar en productos
+        const { data: prodData } = await supabase
+          .from('productos')
+          .select('precio')
+          .eq('cod_modelo', codModelo)
+          .limit(1)
+          .single();
+        precioFallback = prodData?.precio || 0;
+      }
+      setPreciosTalla(preciosMap);
+
+      // Cargar stock con colores
       setLoadingMsg('Verificando stock disponible...');
       const { data: stockData } = await supabase
         .from('stock')
@@ -78,8 +103,8 @@ export default function ProductoPage({ params }) {
         cod_color: v.cod_color,
         cod_talla: v.cod_talla,
         stock_disponible: v.stock_disponible,
-        nombre: modeloData.nombre,
-        precio: precioData?.precio || 0,
+        nombre: modeloData.nombre || modeloData.nombre_modelo,
+        precio: preciosMap[v.cod_talla] || precioFallback,
         nombre_color: v.colores?.nombre_color || v.cod_color,
         hex_color: v.colores?.hex_color || '#CCCCCC',
       }));
@@ -114,7 +139,7 @@ export default function ProductoPage({ params }) {
     agregar({
       id: productoSeleccionado.id,
       nombre: nombreModelo,
-      precio: Number(precio),
+      precio: precioActual,
       color: colores.find(c => c.cod_color === colorSeleccionado)?.nombre_color || colorSeleccionado,
       talla: tallaSeleccionada,
       stockMax: productoSeleccionado.stock_disponible,
@@ -172,7 +197,6 @@ export default function ProductoPage({ params }) {
   );
 
   const nombreModelo = variantes[0]?.nombre?.split(' / ')[0]?.trim() || slug;
-  const precio = variantes[0]?.precio || 0;
   const codModelo = variantes[0]?.cod_modelo;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -184,8 +208,19 @@ export default function ProductoPage({ params }) {
     ? variantes.find(v => v.cod_color === colorSeleccionado && v.cod_talla === tallaSeleccionada)
     : null;
 
+  // Precio dinámico: si hay talla seleccionada muestra su precio, si no muestra el mínimo
+  const precioActual = tallaSeleccionada
+    ? (preciosTalla[tallaSeleccionada] || variantes[0]?.precio || 0)
+    : Math.min(...Object.values(preciosTalla).length > 0
+        ? Object.values(preciosTalla)
+        : [variantes[0]?.precio || 0]);
+
   const stockActual = productoSeleccionado?.stock_disponible || 0;
   const colorActual = colores.find(c => c.cod_color === colorSeleccionado);
+
+  // Verificar si hay múltiples precios (para mostrar "Desde")
+  const preciosUnicos = [...new Set(Object.values(preciosTalla))];
+  const hayMultiplesPrecios = preciosUnicos.length > 1;
 
   return (
     <div style={{ paddingTop: '80px', minHeight: '100vh' }}>
@@ -245,12 +280,22 @@ export default function ProductoPage({ params }) {
             }}>
               {nombreModelo}
             </h1>
+            {/* PRECIO DINÁMICO POR TALLA */}
             <p style={{
               fontFamily: 'var(--font-body)', fontSize: '1.4rem',
               fontWeight: 600, color: 'var(--marron)',
             }}>
-              S/. {Number(precio).toFixed(2)}
+              {hayMultiplesPrecios && !tallaSeleccionada ? 'Desde ' : ''}
+              S/. {Number(precioActual).toFixed(2)}
             </p>
+            {hayMultiplesPrecios && !tallaSeleccionada && (
+              <p style={{
+                fontFamily: 'var(--font-body)', fontSize: '0.78rem',
+                color: 'var(--gris)', marginTop: '0.25rem',
+              }}>
+                El precio varía según la talla seleccionada
+              </p>
+            )}
           </div>
 
           {/* Color */}
@@ -298,10 +343,12 @@ export default function ProductoPage({ params }) {
               {TALLAS_ORDEN.map(t => {
                 const disponible = tallasDisponibles.includes(t);
                 const seleccionada = tallaSeleccionada === t;
+                const precioDeTalla = preciosTalla[t];
                 return (
                   <button key={t}
                     onClick={() => disponible && setTallaSeleccionada(t)}
                     disabled={!disponible}
+                    title={precioDeTalla ? `S/. ${Number(precioDeTalla).toFixed(2)}` : ''}
                     style={{
                       width: '48px', height: '48px',
                       border: seleccionada ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
@@ -337,7 +384,7 @@ export default function ProductoPage({ params }) {
               ? 'Selecciona un color'
               : !tallaSeleccionada
               ? 'Selecciona una talla'
-              : 'Agregar al carrito'}
+              : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
           </button>
 
           {/* Info envíos */}
