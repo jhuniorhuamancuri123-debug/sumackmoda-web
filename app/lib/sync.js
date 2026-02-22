@@ -61,10 +61,3 @@ export async function syncProductos() {
   console.log('Sincronización completada.');
   return { total: items.length };
 }
-```
-
-Guarda con **Ctrl+S** y luego en la terminal escribe:
-```
-git add .
-git commit -m "Fix sync.js error"
-git push
