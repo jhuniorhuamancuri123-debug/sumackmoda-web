@@ -20,23 +20,17 @@ export default function CatalogoPage() {
       .from('productos')
       .select('id, cod_modelo, cod_color, cod_talla, nombre, precio, stock')
       .gt('stock', 0);
-
     if (tallaFiltro) {
       query = query.eq('cod_talla', tallaFiltro);
     }
-
     const { data } = await query.order('cod_modelo');
-
     if (!data) { setLoading(false); return; }
-
-    // Agrupar por modelo, mostrar primer color disponible
     const modelosMap = new Map();
     for (const p of data) {
       if (!modelosMap.has(p.cod_modelo)) {
         modelosMap.set(p.cod_modelo, p);
       }
     }
-
     setProductos(Array.from(modelosMap.values()));
     setLoading(false);
   }
@@ -50,19 +44,31 @@ export default function CatalogoPage() {
         </p>
       </div>
 
-      {/* Filtros por talla */}
+      {/* Aviso precios variables */}
+      <div style={{
+        maxWidth: '1200px', margin: '0 auto',
+        padding: '0 1.5rem 1rem',
+      }}>
+        <div style={{
+          background: 'var(--crema)',
+          borderLeft: '3px solid var(--marron)',
+          padding: '0.75rem 1rem',
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.82rem',
+          color: 'var(--negro)',
+          lineHeight: 1.6,
+        }}>
+          💡 <strong>Los precios varían según la talla.</strong> Filtra por tu talla para ver los modelos disponibles y el precio exacto en cada producto.
+        </div>
+      </div>
+
+      {/* Filtros por talla — sin "Todas" */}
       <div className="catalogo-filtros">
-        <button
-          className={`filtro-btn ${!tallaFiltro ? 'active' : ''}`}
-          onClick={() => setTallaFiltro(null)}
-        >
-          Todas
-        </button>
         {TALLAS.map(t => (
           <button
             key={t}
             className={`filtro-btn ${tallaFiltro === t ? 'active' : ''}`}
-            onClick={() => setTallaFiltro(t)}
+            onClick={() => setTallaFiltro(tallaFiltro === t ? null : t)}
           >
             {t}
           </button>
@@ -74,6 +80,24 @@ export default function CatalogoPage() {
         {loading ? (
           <div className="productos-grid">
             {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : productos.length === 0 ? (
+          <div style={{
+            textAlign: 'center', padding: '4rem',
+            fontFamily: 'var(--font-body)', color: 'var(--gris)',
+          }}>
+            <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
+              No hay modelos disponibles en talla {tallaFiltro}
+            </p>
+            <button onClick={() => setTallaFiltro(null)} style={{
+              fontFamily: 'var(--font-body)', fontSize: '0.8rem',
+              letterSpacing: '0.15em', textTransform: 'uppercase',
+              color: 'var(--marron)', background: 'none',
+              border: 'none', borderBottom: '1px solid var(--marron)',
+              cursor: 'pointer', paddingBottom: '2px',
+            }}>
+              Ver todos los modelos
+            </button>
           </div>
         ) : (
           <div className="productos-grid">
@@ -106,7 +130,7 @@ function ProductoCard({ producto }) {
         {agotado && <span className="producto-badge agotado">Agotado</span>}
       </div>
       <p className="producto-nombre">{nombreModelo}</p>
-      <p className="producto-precio">S/. {Number(precio).toFixed(2)}</p>
+      <p className="producto-precio">Desde S/. {Number(precio).toFixed(2)}</p>
     </Link>
   );
 }
