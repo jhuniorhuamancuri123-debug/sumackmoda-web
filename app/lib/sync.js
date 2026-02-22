@@ -14,7 +14,7 @@ async function getAllAlegraItems() {
     if (items.length < limit) break;
     start += limit;
   }
-x|
+
   return allItems;
 }
 
@@ -30,24 +30,20 @@ export async function syncProductos() {
 
     const { cod_modelo, cod_color, cod_talla } = partes;
 
-    // Extraer nombre del modelo y color del nombre del item
     const nombreParts = item.name.split(' / ');
     const nombre_modelo = nombreParts[0]?.trim() || cod_modelo;
     const nombre_color = nombreParts[1]?.trim() || cod_color;
 
-    // Insertar modelo si no existe
     await supabase.from('modelos').upsert(
       { cod_modelo, nombre_modelo },
       { onConflict: 'cod_modelo' }
     );
 
-    // Insertar color si no existe
     await supabase.from('colores').upsert(
       { cod_color, nombre_color },
       { onConflict: 'cod_color' }
     );
 
-    // Insertar o actualizar producto
     await supabase.from('productos').upsert({
       id: String(item.id),
       cod_modelo,
@@ -65,3 +61,10 @@ export async function syncProductos() {
   console.log('Sincronización completada.');
   return { total: items.length };
 }
+```
+
+Guarda con **Ctrl+S** y luego en la terminal escribe:
+```
+git add .
+git commit -m "Fix sync.js error"
+git push
