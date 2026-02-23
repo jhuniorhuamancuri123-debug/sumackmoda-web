@@ -1,0 +1,23 @@
+name: Sync Alegra cada 30 minutos
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # permite correrlo manualmente desde GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Correr sync completo
+        run: |
+          for page in $(seq 0 34); do
+            echo "Sincronizando página $page..."
+            response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync?page=$page")
+            echo $response
+            hay_mas=$(echo $response | grep -o '"hay_mas":true')
+            if [ -z "$hay_mas" ]; then
+              echo "Sync completo en página $page"
+              break
+            fi
+          done
