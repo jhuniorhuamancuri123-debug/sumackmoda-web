@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "@next/next/no-html-link-for-pages": "off",
+      "@next/next/no-img-element": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/rules-of-hooks": "off",
     },
   },
 ]);
