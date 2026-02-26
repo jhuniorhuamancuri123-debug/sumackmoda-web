@@ -113,7 +113,7 @@ export default function CatalogoPage() {
 function ProductoCard({ producto }) {
   const { cod_modelo, cod_color, nombre, precio, stock } = producto;
   const nombreModelo = nombre.split(' / ')[0]?.trim() || nombre;
-  const imgUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/productos/${cod_modelo}/${cod_color}.jpg`;
+  const imgUrl = `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${cod_modelo}/${cod_color}.jpg`;
   const agotado = stock === 0;
 
   return (

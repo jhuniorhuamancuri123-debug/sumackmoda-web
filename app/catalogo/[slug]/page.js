@@ -191,10 +191,9 @@ export default function ProductoPage({ params }) {
   );
 
   const codModelo = slug.toUpperCase();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const imgUrl = colorSeleccionado
-    ? `${supabaseUrl}/storage/v1/object/public/productos/${codModelo}/${colorSeleccionado}.jpg`
-    : null;
+    ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.jpg`
+  : null;
 
   const colorActual = colores.find(c => c.cod_color === colorSeleccionado);
   const precioActual = itemSeleccionado?.precio

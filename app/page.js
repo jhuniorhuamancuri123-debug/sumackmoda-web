@@ -27,7 +27,8 @@ async function getProductosDestacados() {
 
 export default async function Home() {
   const destacados = await getProductosDestacados();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const r2Url = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL;
+
   return (
     <>
       {/* 1. HERO */}
@@ -41,7 +42,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 2. PRODUCTOS — directo después del hero */}
+      {/* 2. PRODUCTOS */}
       <section className="seccion">
         <div className="seccion-header">
           <h2 className="seccion-titulo">Lo mas vendido</h2>
@@ -52,7 +53,7 @@ export default async function Home() {
             <Link key={p.id} href={"/catalogo/" + p.cod_modelo} className="producto-card">
               <div className="producto-img-wrap">
                 <ProductoImg
-                  src={supabaseUrl + "/storage/v1/object/public/productos/" + p.cod_modelo + "/" + p.cod_color + ".jpg"}
+                  src={`${r2Url}/${p.cod_modelo}/${p.cod_color}.jpg`}
                   alt={p.nombre}
                   hexColor="#e8e4dc"
                 />
@@ -65,7 +66,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 3. FRASE NEGRA — después de productos */}
+      {/* 3. FRASE NEGRA */}
       <section className="seccion-frase">
         <p className="frase-principal">SUMACK nacio de la conviccion de que vestir bien es una forma de respeto propio.</p>
         <span className="frase-sub">Lima, Peru - Moda Masculina Premium</span>

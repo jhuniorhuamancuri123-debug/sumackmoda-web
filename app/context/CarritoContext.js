@@ -7,11 +7,14 @@ export function CarritoProvider({ children }) {
   const [items, setItems] = useState([]);
   const [abierto, setAbierto] = useState(false);
   const [cargado, setCargado] = useState(false);
+  const [nombreCliente, setNombreCliente] = useState('');
 
   useEffect(() => {
     try {
       const guardado = localStorage.getItem('sumack_carrito');
       if (guardado) setItems(JSON.parse(guardado));
+      const nombre = localStorage.getItem('sumack_nombre');
+      if (nombre) setNombreCliente(nombre);
     } catch {}
     setCargado(true);
   }, []);
@@ -22,6 +25,13 @@ export function CarritoProvider({ children }) {
       localStorage.setItem('sumack_carrito', JSON.stringify(items));
     } catch {}
   }, [items, cargado]);
+
+  useEffect(() => {
+    if (!cargado) return;
+    try {
+      if (nombreCliente) localStorage.setItem('sumack_nombre', nombreCliente);
+    } catch {}
+  }, [nombreCliente, cargado]);
 
   function agregar(producto) {
     const itemId = `${producto.id}-${producto.color}-${producto.talla}`;
@@ -79,6 +89,7 @@ export function CarritoProvider({ children }) {
       items, agregar, quitar, cambiarCantidad, vaciar,
       total, totalItems, totalCentavos, getResumenCulqi,
       abierto, setAbierto, cargado,
+      nombreCliente, setNombreCliente,
     }}>
       {children}
     </CarritoContext.Provider>
