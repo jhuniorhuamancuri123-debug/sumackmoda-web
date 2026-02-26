@@ -212,6 +212,8 @@ body { font-family: var(--font-body); background: var(--blanco); color: var(--ne
   .producto-galeria { position: static; }
   .contacto-opciones { grid-template-columns: 1fr; }
   .seccion { padding: 4rem 1.5rem; }
+  .colores-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  .colores-grid button { width: 100%; font-size: 0.7rem; padding: 0.5rem 0.3rem; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (max-width: 480px) { .navbar-logo { font-size: 1.2rem; } }
 @keyframes slideIn {
