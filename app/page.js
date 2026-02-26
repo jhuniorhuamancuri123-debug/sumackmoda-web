@@ -13,16 +13,33 @@ async function getProductosDestacados() {
     .limit(20);
 
   if (!data) return [];
+
+  // Obtener modelos únicos primero
   const modelosVistos = new Set();
-  const destacados = [];
+  const productosUnicos = [];
   for (const p of data) {
     if (!modelosVistos.has(p.cod_modelo)) {
       modelosVistos.add(p.cod_modelo);
-      destacados.push(p);
+      productosUnicos.push(p);
     }
-    if (destacados.length >= 4) break;
+    if (productosUnicos.length >= 4) break;
   }
-  return destacados;
+
+  // Obtener fotos principales de la tabla modelos
+  const codModelos = productosUnicos.map(p => p.cod_modelo);
+  const { data: fotosData } = await supabase
+    .from('modelos')
+    .select('cod_modelo, foto_principal')
+    .in('cod_modelo', codModelos);
+
+  const fotosMap = {};
+  if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
+
+  // Agregar foto_principal a cada producto
+  return productosUnicos.map(p => ({
+    ...p,
+    foto_principal: fotosMap[p.cod_modelo] || p.cod_color,
+  }));
 }
 
 export default async function Home() {
@@ -53,7 +70,7 @@ export default async function Home() {
             <Link key={p.id} href={"/catalogo/" + p.cod_modelo} className="producto-card">
               <div className="producto-img-wrap">
                 <ProductoImg
-                  src={`${r2Url}/${p.cod_modelo}/${p.cod_color}.JPG`}
+                  src={`${r2Url}/${p.cod_modelo}/${p.foto_principal}.JPG`}
                   alt={p.nombre}
                   hexColor="#e8e4dc"
                 />

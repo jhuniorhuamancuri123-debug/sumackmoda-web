@@ -25,13 +25,33 @@ export default function CatalogoPage() {
     }
     const { data } = await query.order('cod_modelo');
     if (!data) { setLoading(false); return; }
+
+    // Obtener un producto por modelo
     const modelosMap = new Map();
     for (const p of data) {
       if (!modelosMap.has(p.cod_modelo)) {
         modelosMap.set(p.cod_modelo, p);
       }
     }
-    setProductos(Array.from(modelosMap.values()));
+    const productosUnicos = Array.from(modelosMap.values());
+
+    // Obtener fotos principales de la tabla modelos
+    const codModelos = productosUnicos.map(p => p.cod_modelo);
+    const { data: fotosData } = await supabase
+      .from('modelos')
+      .select('cod_modelo, foto_principal')
+      .in('cod_modelo', codModelos);
+
+    const fotosMap = {};
+    if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
+
+    // Agregar foto_principal a cada producto
+    const productosConFoto = productosUnicos.map(p => ({
+      ...p,
+      foto_principal: fotosMap[p.cod_modelo] || p.cod_color,
+    }));
+
+    setProductos(productosConFoto);
     setLoading(false);
   }
 
@@ -63,7 +83,7 @@ export default function CatalogoPage() {
         </div>
       </div>
 
-      {/* Filtros por talla — sin "Todas" */}
+      {/* Filtros por talla */}
       <div className="catalogo-filtros">
         {TALLAS.map(t => (
           <button
@@ -111,9 +131,9 @@ export default function CatalogoPage() {
 }
 
 function ProductoCard({ producto }) {
-  const { cod_modelo, cod_color, nombre, precio, stock } = producto;
+  const { cod_modelo, foto_principal, nombre, precio, stock } = producto;
   const nombreModelo = nombre.split(' / ')[0]?.trim() || nombre;
-  const imgUrl = `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${cod_modelo}/${cod_color}.JPG`;
+  const imgUrl = `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${cod_modelo}/${foto_principal}.JPG`;
   const agotado = stock === 0;
 
   return (
