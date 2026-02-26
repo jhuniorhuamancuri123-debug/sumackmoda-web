@@ -192,7 +192,7 @@ export default function ProductoPage({ params }) {
 
   const codModelo = slug.toUpperCase();
   const imgUrl = colorSeleccionado
-    ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.jpg`
+    ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.JPG`
   : null;
 
   const colorActual = colores.find(c => c.cod_color === colorSeleccionado);

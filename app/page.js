@@ -53,7 +53,7 @@ export default async function Home() {
             <Link key={p.id} href={"/catalogo/" + p.cod_modelo} className="producto-card">
               <div className="producto-img-wrap">
                 <ProductoImg
-                  src={`${r2Url}/${p.cod_modelo}/${p.cod_color}.jpg`}
+                  src={`${r2Url}/${p.cod_modelo}/${p.cod_color}.JPG`}
                   alt={p.nombre}
                   hexColor="#e8e4dc"
                 />
