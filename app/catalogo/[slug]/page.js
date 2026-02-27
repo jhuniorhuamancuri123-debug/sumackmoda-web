@@ -284,25 +284,33 @@ export default function ProductoPage({ params }) {
             }}>
               Color: <strong>{colorActual?.nombre_color || ''}</strong>
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {colores.map(c => (
-                <button key={c.cod_color} title={c.nombre_color}
-                  onClick={() => setColorSeleccionado(c.cod_color)}
-                  style={{
-                    padding: '0.4rem 0.75rem',
-                    border: colorSeleccionado === c.cod_color
-                      ? '2px solid var(--negro)'
-                      : '1px solid var(--gris-claro)',
-                    background: colorSeleccionado === c.cod_color ? 'var(--negro)' : 'transparent',
-                    color: colorSeleccionado === c.cod_color ? 'var(--blanco)' : 'var(--negro)',
-                    fontFamily: 'var(--font-body)', fontSize: '0.8rem',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    letterSpacing: '0.05em',
-                  }}>
-                  {c.nombre_color}
-                </button>
-              ))}
-            </div>
+            <div style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: '0.4rem',
+}}>
+  {colores.map(c => (
+    <button key={c.cod_color} title={c.nombre_color}
+      onClick={() => setColorSeleccionado(c.cod_color)}
+      style={{
+        padding: '0.4rem 0.3rem',
+        border: colorSeleccionado === c.cod_color
+          ? '2px solid var(--negro)'
+          : '1px solid var(--gris-claro)',
+        background: colorSeleccionado === c.cod_color ? 'var(--negro)' : 'transparent',
+        color: colorSeleccionado === c.cod_color ? 'var(--blanco)' : 'var(--negro)',
+        fontFamily: 'var(--font-body)', fontSize: '0.72rem',
+        cursor: 'pointer', transition: 'all 0.2s',
+        letterSpacing: '0.03em',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        width: '100%',
+      }}>
+      {c.nombre_color}
+    </button>
+  ))}
+</div>
           </div>
 
           {/* Talla */}
