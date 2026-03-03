@@ -362,42 +362,75 @@ export default function ProductoPage({ params }) {
           {/* 2. IMAGEN */}
           <div style={{ position: 'relative' }}>
             <div
-              onClick={() => setLightboxAbierto(true)}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                width: '100%', height: '62vw',
-                minHeight: '260px', maxHeight: '380px',
-                background: colorActual?.hex_color || '#e8e4dc',
-                overflow: 'hidden', cursor: 'zoom-in',
-                position: 'relative', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              {imgUrl && (
-                <ProductoImg
-                  src={imgUrl}
-                  alt={nombreModelo}
-                  hexColor={colorActual?.hex_color || '#e8e4dc'}
-                />
-              )}
-              {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
-                <div style={{
-                  position: 'absolute', top: '0.75rem', left: '0.75rem',
-                  background: '#c0392b', color: '#fff',
-                  fontFamily: 'var(--font-body)', fontSize: '0.65rem',
-                  letterSpacing: '0.1em', textTransform: 'uppercase',
-                  padding: '0.3rem 0.6rem',
-                }}>¡Últimas {itemSeleccionado.stock}!</div>
-              )}
-              <div style={{
-                position: 'absolute', bottom: '0.6rem', right: '0.6rem',
-                background: 'rgba(0,0,0,0.35)', borderRadius: '4px',
-                padding: '0.3rem 0.4rem', color: '#fff', fontSize: '0.7rem',
-                fontFamily: 'var(--font-body)', letterSpacing: '0.05em',
-                backdropFilter: 'blur(4px)',
-              }}>🔍 Ver</div>
-            </div>
+  onClick={() => setLightboxAbierto(true)}
+  onTouchStart={handleTouchStart}
+  onTouchEnd={handleTouchEnd}
+  style={{
+    width: '100%',
+    height: '62vw',
+    minHeight: '260px',
+    maxHeight: '380px',
+    overflow: 'hidden',
+    cursor: 'zoom-in',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}
+>
+  {/* FONDO PIXELEADO */}
+  {imgUrl && (
+    <img
+      src={imgUrl}
+      alt=""
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        filter: 'blur(18px) brightness(0.85)',
+        transform: 'scale(1.1)',
+      }}
+    />
+  )}
+
+  {/* IMAGEN PRINCIPAL CENTRADA */}
+  {imgUrl && (
+    <div style={{
+      position: 'relative',
+      zIndex: 1,
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <ProductoImg
+        src={imgUrl}
+        alt={nombreModelo}
+        hexColor="transparent"
+      />
+    </div>
+  )}
+
+  {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
+    <div style={{
+      position: 'absolute', top: '0.75rem', left: '0.75rem',
+      background: '#c0392b', color: '#fff',
+      fontFamily: 'var(--font-body)', fontSize: '0.65rem',
+      letterSpacing: '0.1em', textTransform: 'uppercase',
+      padding: '0.3rem 0.6rem', zIndex: 2,
+    }}>¡Últimas {itemSeleccionado.stock}!</div>
+  )}
+
+  <div style={{
+    position: 'absolute', bottom: '0.6rem', right: '0.6rem',
+    background: 'rgba(0,0,0,0.35)', borderRadius: '4px',
+    padding: '0.3rem 0.4rem', color: '#fff', fontSize: '0.7rem',
+    fontFamily: 'var(--font-body)', letterSpacing: '0.05em',
+    backdropFilter: 'blur(4px)', zIndex: 2,
+  }}>🔍 Ver</div>
+</div>
 
             {colores.length > 1 && (
               <>
