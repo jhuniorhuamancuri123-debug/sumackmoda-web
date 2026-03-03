@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
+import ProductoImg from '../components/ProductoImg';
 
 const TALLAS = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -26,7 +27,7 @@ export default function CatalogoPage() {
     const { data } = await query.order('cod_modelo');
     if (!data) { setLoading(false); return; }
 
-    // Obtener un producto por modelo
+    // Un producto por modelo
     const modelosMap = new Map();
     for (const p of data) {
       if (!modelosMap.has(p.cod_modelo)) {
@@ -35,7 +36,7 @@ export default function CatalogoPage() {
     }
     const productosUnicos = Array.from(modelosMap.values());
 
-    // Obtener fotos principales de la tabla modelos
+    // Fotos principales de tabla modelos
     const codModelos = productosUnicos.map(p => p.cod_modelo);
     const { data: fotosData } = await supabase
       .from('modelos')
@@ -45,7 +46,6 @@ export default function CatalogoPage() {
     const fotosMap = {};
     if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
 
-    // Agregar foto_principal a cada producto
     const productosConFoto = productosUnicos.map(p => ({
       ...p,
       foto_principal: fotosMap[p.cod_modelo] || p.cod_color,
@@ -65,10 +65,7 @@ export default function CatalogoPage() {
       </div>
 
       {/* Aviso precios variables */}
-      <div style={{
-        maxWidth: '1200px', margin: '0 auto',
-        padding: '0 1.5rem 1rem',
-      }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem 1rem' }}>
         <div style={{
           background: 'var(--crema)',
           borderLeft: '4px solid var(--marron)',
@@ -139,15 +136,7 @@ function ProductoCard({ producto }) {
   return (
     <Link href={`/catalogo/${cod_modelo}`} className="producto-card">
       <div className="producto-img-wrap">
-        <img
-          src={imgUrl}
-          alt={nombreModelo}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
-          onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.parentNode.innerHTML = `<div class="producto-placeholder">SUMACK</div>`;
-          }}
-        />
+        <ProductoImg src={imgUrl} alt={nombreModelo} hexColor="#e8e4dc" />
         {agotado && <span className="producto-badge agotado">Agotado</span>}
       </div>
       <p className="producto-nombre">{nombreModelo}</p>
