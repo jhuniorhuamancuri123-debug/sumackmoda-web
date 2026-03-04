@@ -6,6 +6,41 @@ import { useToast } from '../../context/ToastContext';
 import ProductoImg from '../../components/ProductoImg';
 
 const TALLAS_ORDEN = ['S', 'M', 'L', 'XL', 'XXL'];
+function ImagenConFallback({ src, alt }) {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div style={{
+        position: 'relative', zIndex: 1,
+        width: '100%', height: '100%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'var(--font-display)', fontSize: '1.5rem',
+        fontWeight: 900, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em',
+      }}>
+        SUMACK
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setError(true)}
+      style={{
+        position: 'relative',
+        zIndex: 1,
+        maxHeight: '100%',
+        maxWidth: '100%',
+        width: 'auto',
+        height: 'auto',
+        objectFit: 'contain',
+        display: 'block',
+      }}
+    />
+  );
+}
 
 export default function ProductoPage({ params }) {
   const { slug } = use(params);
@@ -393,19 +428,10 @@ export default function ProductoPage({ params }) {
 
             {/* IMAGEN PRINCIPAL — completa y centrada */}
             {imgUrl && (
-              <img
+              <ImagenConFallback
+                key={colorSeleccionado}
                 src={imgUrl}
                 alt={nombreModelo}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  maxHeight: '100%',
-                  maxWidth: '100%',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                }}
               />
             )}
 
@@ -586,20 +612,10 @@ export default function ProductoPage({ params }) {
               />
             )}
             {imgUrl && (
-              <img
+              <ImagenConFallback
                 key={colorSeleccionado}
                 src={imgUrl}
                 alt={nombreModelo}
-                style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  maxHeight: '100%',
-                  maxWidth: '100%',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                }}
               />
             )}
             {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
