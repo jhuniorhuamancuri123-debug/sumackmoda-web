@@ -1,9 +1,9 @@
 'use client';
 import { use, useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
-import { useCarrito } from '../../context/CarritoContext';
-import { useToast } from '../../context/ToastContext';
-import ProductoImg from '../../components/ProductoImg';
+import { supabase } from '../lib/supabase';
+import { useCarrito } from '../context/CarritoContext';
+import { useToast } from '../context/ToastContext';
+import ProductoImg from '../components/ProductoImg';
 
 const TALLAS_ORDEN = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -278,6 +278,7 @@ export default function ProductoPage({ params }) {
           }}>
             {imgUrl && (
               <ProductoImg
+                key={colorSeleccionado}
                 src={imgUrl}
                 alt={nombreModelo}
                 hexColor="rgba(255,255,255,0.05)"
@@ -571,6 +572,7 @@ export default function ProductoPage({ params }) {
           }}>
             {imgUrl && (
               <ProductoImg
+                key={colorSeleccionado}
                 src={imgUrl}
                 alt={nombreModelo}
                 hexColor={colorActual?.hex_color || '#e8e4dc'}
