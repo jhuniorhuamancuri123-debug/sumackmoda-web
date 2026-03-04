@@ -566,16 +566,40 @@ export default function ProductoPage({ params }) {
         }}>
           <div style={{
             width: '100%', height: 'calc(100vh - 140px)', maxHeight: '520px',
-            background: colorActual?.hex_color || '#e8e4dc',
             overflow: 'hidden', position: 'relative',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             {imgUrl && (
-              <ProductoImg
+              <img
+                src={imgUrl}
+                alt=""
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(22px) brightness(0.8)',
+                  transform: 'scale(1.15)',
+                  zIndex: 0,
+                }}
+              />
+            )}
+            {imgUrl && (
+              <img
                 key={colorSeleccionado}
                 src={imgUrl}
                 alt={nombreModelo}
-                hexColor={colorActual?.hex_color || '#e8e4dc'}
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  maxHeight: '100%',
+                  maxWidth: '100%',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
               />
             )}
             {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
@@ -584,7 +608,7 @@ export default function ProductoPage({ params }) {
                 background: '#c0392b', color: '#fff',
                 fontFamily: 'var(--font-body)', fontSize: '0.7rem',
                 letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '0.4rem 0.75rem',
+                padding: '0.4rem 0.75rem', zIndex: 2,
               }}>¡Últimas {itemSeleccionado.stock} unidades!</div>
             )}
           </div>
