@@ -30,7 +30,6 @@ export default function ProductoPage({ params }) {
   const colorActual = colores[colorIndex] || null;
   const codModelo = slug.toUpperCase();
 
-  // FIX 1 — imgUrl como variable estable derivada del estado
   const imgUrl = colorSeleccionado
     ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.jpeg`
     : null;
@@ -44,7 +43,6 @@ export default function ProductoPage({ params }) {
 
   useEffect(() => { cargarProducto(); }, [slug]);
 
-  // FIX 2 — dependencia correcta usando colorIndex directamente
   useEffect(() => {
     if (!colorSeleccionado) return;
     cargarTallas(colorSeleccionado);
@@ -57,7 +55,6 @@ export default function ProductoPage({ params }) {
     cargarItem(colorSeleccionado, tallaSeleccionada);
   }, [tallaSeleccionada, colorIndex]);
 
-  // FIX 3 — cleanup del scroll al desmontar
   useEffect(() => {
     if (lightboxAbierto) {
       document.body.style.overflow = 'hidden';
@@ -139,7 +136,6 @@ export default function ProductoPage({ params }) {
     setItemSeleccionado(data || null);
   }
 
-  // FIX 4 — useCallback para estabilizar y construir imgUrl internamente
   const handleAgregar = useCallback(() => {
     if (!itemSeleccionado || itemSeleccionado.stock <= 0) return;
     setAgregando(true);
@@ -168,7 +164,6 @@ export default function ProductoPage({ params }) {
     setColorIndex(prev => (prev < colores.length - 1 ? prev + 1 : 0));
   }, [colores.length]);
 
-  // FIX 5 — useCallback en handlers de touch
   const handleTouchStart = useCallback((e) => {
     touchStartX.current = e.touches[0].clientX;
   }, []);
@@ -359,115 +354,79 @@ export default function ProductoPage({ params }) {
             )}
           </div>
 
-          {/* 2. IMAGEN */}
-          <div style={{ position: 'relative' }}>
-            <div
-  onClick={() => setLightboxAbierto(true)}
-  onTouchStart={handleTouchStart}
-  onTouchEnd={handleTouchEnd}
-  style={{
-    width: '100%',
-    height: '62vw',
-    minHeight: '260px',
-    maxHeight: '380px',
-    overflow: 'hidden',
-    cursor: 'zoom-in',
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}
->
-  {/* FONDO PIXELEADO */}
-  {imgUrl && (
-    <img
-      src={imgUrl}
-      alt=""
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        filter: 'blur(18px) brightness(0.85)',
-        transform: 'scale(1.1)',
-      }}
-    />
-  )}
-
-  {/* IMAGEN PRINCIPAL CENTRADA */}
-  {imgUrl && (
-    <div style={{
-      position: 'relative',
-      zIndex: 1,
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <ProductoImg
-        src={imgUrl}
-        alt={nombreModelo}
-        hexColor="transparent"
-      />
-    </div>
-  )}
-
-  {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
-    <div style={{
-      position: 'absolute', top: '0.75rem', left: '0.75rem',
-      background: '#c0392b', color: '#fff',
-      fontFamily: 'var(--font-body)', fontSize: '0.65rem',
-      letterSpacing: '0.1em', textTransform: 'uppercase',
-      padding: '0.3rem 0.6rem', zIndex: 2,
-    }}>¡Últimas {itemSeleccionado.stock}!</div>
-  )}
-
-  <div style={{
-    position: 'absolute', bottom: '0.6rem', right: '0.6rem',
-    background: 'rgba(0,0,0,0.35)', borderRadius: '4px',
-    padding: '0.3rem 0.4rem', color: '#fff', fontSize: '0.7rem',
-    fontFamily: 'var(--font-body)', letterSpacing: '0.05em',
-    backdropFilter: 'blur(4px)', zIndex: 2,
-  }}>🔍 Ver</div>
-</div>
-
-            {colores.length > 1 && (
-              <>
-                <button onClick={irColorAnterior} style={{
-                  position: 'absolute', left: '0.5rem', top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(255,255,255,0.85)', border: 'none',
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  fontSize: '1.1rem', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                }}>‹</button>
-                <button onClick={irColorSiguiente} style={{
-                  position: 'absolute', right: '0.5rem', top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(255,255,255,0.85)', border: 'none',
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  fontSize: '1.1rem', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                }}>›</button>
-              </>
+          {/* 2. IMAGEN — sin flechas ni puntos */}
+          <div
+            onClick={() => setLightboxAbierto(true)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            style={{
+              width: '100%',
+              height: '62vw',
+              minHeight: '260px',
+              maxHeight: '380px',
+              position: 'relative',
+              overflow: 'hidden',
+              cursor: 'zoom-in',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* FONDO BORROSO */}
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt=""
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(22px) brightness(0.8)',
+                  transform: 'scale(1.15)',
+                  zIndex: 0,
+                }}
+              />
             )}
 
-            {colores.length > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.35rem', marginTop: '0.6rem' }}>
-                {colores.map((_, i) => (
-                  <button key={i} onClick={() => setColorIndex(i)} style={{
-                    width: i === colorIndex ? '18px' : '7px',
-                    height: '7px', borderRadius: '4px',
-                    background: i === colorIndex ? 'var(--negro)' : 'var(--gris-claro)',
-                    border: 'none', cursor: 'pointer',
-                    transition: 'all 0.3s ease', padding: 0,
-                  }} />
-                ))}
-              </div>
+            {/* IMAGEN PRINCIPAL — completa y centrada */}
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt={nombreModelo}
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  maxHeight: '100%',
+                  maxWidth: '100%',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
+              />
             )}
+
+            {/* BADGE stock bajo */}
+            {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
+              <div style={{
+                position: 'absolute', top: '0.75rem', left: '0.75rem',
+                background: '#c0392b', color: '#fff',
+                fontFamily: 'var(--font-body)', fontSize: '0.65rem',
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                padding: '0.3rem 0.6rem', zIndex: 2,
+              }}>¡Últimas {itemSeleccionado.stock}!</div>
+            )}
+
+            {/* BOTÓN VER */}
+            <div style={{
+              position: 'absolute', bottom: '0.6rem', right: '0.6rem',
+              background: 'rgba(0,0,0,0.35)', borderRadius: '4px',
+              padding: '0.3rem 0.4rem', color: '#fff', fontSize: '0.7rem',
+              fontFamily: 'var(--font-body)', letterSpacing: '0.05em',
+              backdropFilter: 'blur(4px)', zIndex: 2,
+            }}>🔍 Ver</div>
           </div>
 
           {/* 3. COLOR */}
