@@ -35,11 +35,13 @@ async function getProductosDestacados() {
   const fotosMap = {};
   if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
 
-  // Agregar foto_principal a cada producto
-  return productosUnicos.map(p => ({
-    ...p,
-    foto_principal: fotosMap[p.cod_modelo] || p.cod_color,
-  }));
+  // Solo productos con foto_principal definida
+  return productosUnicos
+    .filter(p => fotosMap[p.cod_modelo] != null)
+    .map(p => ({
+      ...p,
+      foto_principal: fotosMap[p.cod_modelo],
+    }));
 }
 
 export default async function Home() {
