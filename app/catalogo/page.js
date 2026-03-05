@@ -46,10 +46,12 @@ export default function CatalogoPage() {
     const fotosMap = {};
     if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
 
-    const productosConFoto = productosUnicos.map(p => ({
-      ...p,
-      foto_principal: fotosMap[p.cod_modelo] || p.cod_color,
-    }));
+    const productosConFoto = productosUnicos
+      .filter(p => fotosMap[p.cod_modelo] != null)
+      .map(p => ({
+        ...p,
+        foto_principal: fotosMap[p.cod_modelo],
+      }));
 
     setProductos(productosConFoto);
     setLoading(false);
