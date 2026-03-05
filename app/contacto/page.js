@@ -14,9 +14,13 @@ export default function ContactoPage() {
             <h3>WhatsApp</h3>
             <p>+51 968 267 313 - Respuesta en menos de 24 horas</p>
           </a>
-          <a href="https://www.instagram.com/sumack" target="_blank" rel="noopener" className="contacto-card">
+          <a href="https://www.instagram.com/sumackmoda/" target="_blank" rel="noopener" className="contacto-card">
             <h3>Instagram</h3>
-            <p>@sumack - Siguenos para ver las ultimas novedades</p>
+            <p>@sumackmoda - Siguenos para ver las ultimas novedades</p>
+          </a>
+          <a href="https://www.tiktok.com/@sumackmoda?lang=es-419" target="_blank" rel="noopener" className="contacto-card">
+            <h3>TikTok</h3>
+            <p>@sumackmoda - Siguenos para ver las ultimas novedades</p>
           </a>
         </div>
         <div style={{marginTop:"3rem",padding:"2rem",background:"var(--crema)",borderLeft:"3px solid var(--marron)"}}>
