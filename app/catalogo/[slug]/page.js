@@ -66,7 +66,7 @@ export default function ProductoPage({ params }) {
   const codModelo = slug.toUpperCase();
 
   const imgUrl = colorSeleccionado
-    ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.jpeg`
+    ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.webp`
     : null;
 
   useEffect(() => {
@@ -175,7 +175,7 @@ export default function ProductoPage({ params }) {
     if (!itemSeleccionado || itemSeleccionado.stock <= 0) return;
     setAgregando(true);
     const imagenActual = colorSeleccionado
-      ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.jpeg`
+      ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.webp`
       : null;
     agregar({
       id: itemSeleccionado.id,
