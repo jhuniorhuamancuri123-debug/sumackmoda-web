@@ -84,7 +84,7 @@ export default function ProductoPage({ params }) {
     cargarTallas(colorSeleccionado);
     setTallaSeleccionada(null);
     setItemSeleccionado(null);
-  }, [colorIndex]);
+  }, [colorSeleccionado]);
 
   useEffect(() => {
     if (!tallaSeleccionada || !colorSeleccionado) return;
@@ -123,7 +123,7 @@ export default function ProductoPage({ params }) {
         .from('modelos')
         .select('descripcion')
         .eq('cod_modelo', codModelo)
-        .single();
+        .maybeSingle();
       setDescripcion(modeloData?.descripcion || '');
 
       const coloresMap = new Map();
