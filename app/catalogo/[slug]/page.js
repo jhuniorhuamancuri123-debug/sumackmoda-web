@@ -129,7 +129,18 @@ export default function ProductoPage({ params }) {
           });
         }
       }
-      const coloresArray = Array.from(coloresMap.values());
+      // Consultar qué colores tienen foto
+      const { data: imagenesData } = await supabase
+        .from('imagenes')
+        .select('cod_color')
+        .eq('cod_modelo', codModelo)
+        .eq('tiene_foto', true);
+
+      const coloresConFoto = new Set(imagenesData?.map(i => i.cod_color) || []);
+
+      const coloresArray = Array.from(coloresMap.values())
+        .filter(c => coloresConFoto.has(c.cod_color));
+
       setColores(coloresArray);
       setColorIndex(0);
     } catch (err) {
