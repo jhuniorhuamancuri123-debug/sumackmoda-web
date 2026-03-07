@@ -43,7 +43,7 @@ export function CarritoProvider({ children }) {
       }
       return [...prev, { ...producto, itemId, cantidad: 1 }];
     });
-    setAbierto(true);
+    // no abrir panel automáticamente
   }
 
   function quitar(itemId) {

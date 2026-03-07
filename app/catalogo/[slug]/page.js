@@ -51,6 +51,7 @@ export default function ProductoPage({ params }) {
   const [itemSeleccionado, setItemSeleccionado] = useState(null);
   const [nombreModelo, setNombreModelo] = useState('');
   const [loading, setLoading] = useState(true);
+  const [descripcion, setDescripcion] = useState('');
   const [loadingMsg, setLoadingMsg] = useState('Buscando producto...');
   const [noEncontrado, setNoEncontrado] = useState(false);
   const [agregando, setAgregando] = useState(false);
@@ -118,6 +119,13 @@ export default function ProductoPage({ params }) {
       const nombre = data[0].nombre.split(' / ')[0]?.trim() || codModelo;
       setNombreModelo(nombre);
 
+      const { data: modeloData } = await supabase
+        .from('modelos')
+        .select('descripcion')
+        .eq('cod_modelo', codModelo)
+        .single();
+      setDescripcion(modeloData?.descripcion || '');
+
       const coloresMap = new Map();
       for (const item of data) {
         if (!coloresMap.has(item.cod_color)) {
@@ -169,6 +177,8 @@ export default function ProductoPage({ params }) {
       };
     }).filter(t => t.existe);
     setTallasInfo(tallasData);
+    const primeraDisponible = tallasData.find(t => t.disponible);
+    if (primeraDisponible) setTallaSeleccionada(primeraDisponible.talla);
   }
 
   async function cargarItem(codColor, codTalla) {
@@ -198,7 +208,7 @@ export default function ProductoPage({ params }) {
       imagen: imagenActual,
       hexColor: colorActual?.hex_color || '#e8e4dc',
     });
-    toast.success(`¡${nombreModelo} agregado al carrito!`);
+    toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);
     setTimeout(() => setAgregando(false), 1500);
   }, [itemSeleccionado, colorSeleccionado, colorActual, tallaSeleccionada, nombreModelo, codModelo, agregar, toast]);
 
@@ -285,7 +295,7 @@ export default function ProductoPage({ params }) {
   const hayMultiplesPrecios = [...new Set(tallasInfo.map(t => t.precio))].length > 1;
 
   return (
-    <div style={{ paddingTop: '80px', minHeight: '100vh' }}>
+    <div style={{ paddingTop: '80px', minHeight: '100vh', paddingBottom: isMobile ? '80px' : '0' }}>
 
       {/* LIGHTBOX */}
       {lightboxAbierto && (
@@ -398,6 +408,12 @@ export default function ProductoPage({ params }) {
               <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--gris)', marginTop: '0.2rem' }}>
                 El precio varía según la talla
               </p>
+            )}
+            {descripcion && (
+              <p style={{
+                fontFamily: 'var(--font-body)', fontSize: '0.82rem',
+                color: 'var(--gris)', lineHeight: 1.6, marginTop: '0.6rem',
+              }}>{descripcion}</p>
             )}
           </div>
 
@@ -541,25 +557,34 @@ export default function ProductoPage({ params }) {
             )}
           </div>
 
-          {/* 5. BOTÓN AGREGAR */}
-          <button onClick={handleAgregar}
-            disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
-            style={{
-              width: '100%', padding: '1rem',
-              background: agregando ? 'var(--marron)' : itemSeleccionado && itemSeleccionado.stock > 0 ? 'var(--negro)' : 'var(--gris-claro)',
-              color: (itemSeleccionado && itemSeleccionado.stock > 0) || agregando ? 'var(--blanco)' : 'var(--gris)',
-              fontFamily: 'var(--font-body)', fontSize: '0.85rem',
-              fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-              border: 'none',
-              cursor: itemSeleccionado && itemSeleccionado.stock > 0 && !agregando ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s',
-            }}>
-            {agregando ? '✓ Agregado al carrito'
-              : !colorSeleccionado ? 'Selecciona un color'
-              : !tallaSeleccionada ? 'Selecciona una talla'
-              : itemSeleccionado?.stock <= 0 ? 'Agotado'
-              : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
-          </button>
+          {/* 5. BOTÓN AGREGAR — sticky bottom en móvil */}
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            padding: '0.75rem 1.25rem',
+            background: 'var(--blanco)',
+            borderTop: '1px solid var(--gris-claro)',
+            zIndex: 100,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
+          }}>
+            <button onClick={handleAgregar}
+              disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
+              style={{
+                width: '100%', padding: '1rem',
+                background: agregando ? 'var(--marron)' : itemSeleccionado && itemSeleccionado.stock > 0 ? 'var(--negro)' : 'var(--gris-claro)',
+                color: (itemSeleccionado && itemSeleccionado.stock > 0) || agregando ? 'var(--blanco)' : 'var(--gris)',
+                fontFamily: 'var(--font-body)', fontSize: '0.85rem',
+                fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
+                border: 'none',
+                cursor: itemSeleccionado && itemSeleccionado.stock > 0 && !agregando ? 'pointer' : 'not-allowed',
+                transition: 'all 0.3s',
+              }}>
+              {agregando ? '✓ Agregado al carrito'
+                : !colorSeleccionado ? 'Selecciona un color'
+                : !tallaSeleccionada ? 'Selecciona una talla'
+                : itemSeleccionado?.stock <= 0 ? 'Agotado'
+                : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
+            </button>
+          </div>
 
           {/* 6. INFO ENVÍOS */}
           <div style={{
@@ -601,42 +626,52 @@ export default function ProductoPage({ params }) {
           maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem',
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem',
         }}>
-          <div style={{
-            width: '100%', height: 'calc(100vh - 140px)', maxHeight: '520px',
-            overflow: 'hidden', position: 'relative',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {imgUrl && (
-              <img
-                src={imgUrl}
-                alt=""
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: 'blur(22px) brightness(0.8)',
-                  transform: 'scale(1.15)',
-                  zIndex: 0,
-                }}
-              />
-            )}
-            {imgUrl && (
-              <ImagenConFallback
-                key={colorSeleccionado}
-                src={imgUrl}
-                alt={nombreModelo}
-              />
-            )}
-            {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{
+              width: '100%', height: 'calc(100vh - 140px)', maxHeight: '520px',
+              overflow: 'hidden', position: 'relative',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {imgUrl && (
+                <img
+                  src={imgUrl}
+                  alt=""
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    filter: 'blur(22px) brightness(0.8)',
+                    transform: 'scale(1.15)',
+                    zIndex: 0,
+                  }}
+                />
+              )}
+              {imgUrl && (
+                <ImagenConFallback
+                  key={colorSeleccionado}
+                  src={imgUrl}
+                  alt={nombreModelo}
+                />
+              )}
+              {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
+                <div style={{
+                  position: 'absolute', top: '1rem', left: '1rem',
+                  background: '#c0392b', color: '#fff',
+                  fontFamily: 'var(--font-body)', fontSize: '0.7rem',
+                  letterSpacing: '0.1em', textTransform: 'uppercase',
+                  padding: '0.4rem 0.75rem', zIndex: 2,
+                }}>¡Últimas {itemSeleccionado.stock} unidades!</div>
+              )}
+            </div>
+            {descripcion && (
               <div style={{
-                position: 'absolute', top: '1rem', left: '1rem',
-                background: '#c0392b', color: '#fff',
-                fontFamily: 'var(--font-body)', fontSize: '0.7rem',
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '0.4rem 0.75rem', zIndex: 2,
-              }}>¡Últimas {itemSeleccionado.stock} unidades!</div>
+                padding: '1rem', background: 'var(--crema)',
+                borderLeft: '3px solid var(--marron)',
+                fontFamily: 'var(--font-body)', fontSize: '0.85rem',
+                lineHeight: 1.7, color: 'var(--negro)',
+              }}>{descripcion}</div>
             )}
           </div>
 

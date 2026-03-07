@@ -46,11 +46,18 @@ export default function CatalogoPage() {
     const fotosMap = {};
     if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
 
-    const productosConFoto = productosUnicos
+    const coloresPorModelo = {};
+  for (const p of data) {
+    if (!coloresPorModelo[p.cod_modelo]) coloresPorModelo[p.cod_modelo] = new Set();
+    coloresPorModelo[p.cod_modelo].add(p.cod_color);
+  }
+
+  const productosConFoto = productosUnicos
       .filter(p => fotosMap[p.cod_modelo] != null)
       .map(p => ({
         ...p,
         foto_principal: fotosMap[p.cod_modelo],
+        totalColores: coloresPorModelo[p.cod_modelo]?.size || 1,
       }));
 
     setProductos(productosConFoto);
@@ -142,6 +149,9 @@ function ProductoCard({ producto }) {
         {agotado && <span className="producto-badge agotado">Agotado</span>}
       </div>
       <p className="producto-nombre">{nombreModelo}</p>
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: 'var(--gris)', marginBottom: '0.2rem' }}>
+        {producto.totalColores} {producto.totalColores === 1 ? 'color' : 'colores'} disponibles
+      </p>
       <p className="producto-precio">Desde S/. {Number(precio).toFixed(2)}</p>
     </Link>
   );
