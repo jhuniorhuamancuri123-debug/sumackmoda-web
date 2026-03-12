@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 const ALMACEN_9NO = "1";
 const ALMACEN_6TO = "2";
 const LIMIT = 30;
-const PAGINAS_POR_LLAMADA = 10; // 10 x 30 = 300 productos por llamada
+const PAGINAS_POR_LLAMADA = 10;
 
 function getStockPorAlmacen(item, almacenId) {
   if (!item.inventory?.warehouses) return 0;
@@ -23,21 +23,22 @@ function getPrecioTotal(item) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const startPage = parseInt(searchParams.get('page') || '0');
-    const start = startPage * LIMIT * PAGINAS_POR_LLAMADA;
+    const startPage  = parseInt(searchParams.get('page') || '0');
+    const syncSession = searchParams.get('session') || new Date().toISOString();
+    const start      = startPage * LIMIT * PAGINAS_POR_LLAMADA;
 
-    console.log(`Sincronizando desde item ${start}...`);
+    console.log(`Sincronizando desde item ${start} | session=${syncSession}...`);
 
-    const modelosMap = {};
-    const coloresMap = {};
+    const modelosMap   = {};
+    const coloresMap   = {};
     const productosData = [];
-    let totalFetched = 0;
-    let hayMas = true;
+    let totalFetched   = 0;
+    let hayMas         = true;
 
     for (let i = 0; i < PAGINAS_POR_LLAMADA; i++) {
-      const offset = start + (i * LIMIT);
+      const offset   = start + (i * LIMIT);
       const response = await alegraClient.get(`/items?limit=${LIMIT}&start=${offset}`);
-      const items = response.data;
+      const items    = response.data;
 
       if (!items || items.length === 0) {
         hayMas = false;
@@ -49,30 +50,31 @@ export async function GET(request) {
         if (!partes) continue;
 
         const { cod_modelo, cod_color, cod_talla } = partes;
-        const nombreParts = item.name.split(' / ');
+        const nombreParts  = item.name.split(' / ');
         const nombre_modelo = nombreParts[0]?.trim() || cod_modelo;
-        const nombre_color = nombreParts[1]?.trim() || cod_color;
+        const nombre_color  = nombreParts[1]?.trim() || cod_color;
 
         const stock_9no = getStockPorAlmacen(item, ALMACEN_9NO);
         const stock_6to = getStockPorAlmacen(item, ALMACEN_6TO);
-        const precio = getPrecioTotal(item);
+        const precio    = getPrecioTotal(item);
 
         modelosMap[cod_modelo] = { cod_modelo, nombre_modelo };
-        coloresMap[cod_color] = { cod_color, nombre_color };
+        coloresMap[cod_color]  = { cod_color, nombre_color };
 
         productosData.push({
-          id: String(item.id),
+          id:           String(item.id),
           cod_modelo,
           cod_color,
           cod_talla,
-          nombre: item.name,
-          codigo: item.reference,
+          nombre:       item.name,
+          codigo:       item.reference,
           precio,
-          stock: stock_9no + stock_6to,
+          stock:        stock_9no + stock_6to,
           stock_9no,
           stock_6to,
-          activo: true,
-          ultima_sync: new Date().toISOString(),
+          activo:       true,
+          ultima_sync:  new Date().toISOString(),
+          sync_session: syncSession,  // ← mismo valor para toda la ejecución
         });
       }
 
@@ -83,6 +85,7 @@ export async function GET(request) {
       }
     }
 
+    // Guardar modelos y colores
     if (Object.keys(modelosMap).length > 0) {
       await supabase.from('modelos').upsert(
         Object.values(modelosMap),
@@ -97,6 +100,7 @@ export async function GET(request) {
       );
     }
 
+    // Guardar productos
     if (productosData.length > 0) {
       await supabase.from('productos').upsert(
         productosData,
@@ -107,23 +111,19 @@ export async function GET(request) {
     console.log(`Página ${startPage} completada. Items procesados: ${totalFetched}`);
 
     return Response.json({
-      success: true,
-      pagina_actual: startPage,
+      success:          true,
+      pagina_actual:    startPage,
       items_procesados: totalFetched,
-      hay_mas: hayMas,
-      siguiente_url: hayMas
-        ? `/api/sync?page=${startPage + 1}`
-        : null,
-      mensaje: hayMas
-        ? `Corre /api/sync?page=${startPage + 1} para continuar`
-        : 'Sincronización completa'
+      hay_mas:          hayMas,
+      session:          syncSession,
+      siguiente_url:    hayMas ? `/api/sync?page=${startPage + 1}&session=${syncSession}` : null,
+      mensaje:          hayMas
+        ? `Corre /api/sync?page=${startPage + 1}&session=${syncSession} para continuar`
+        : 'Sincronización completa',
     });
 
   } catch (error) {
     console.error('Error en sync:', error);
-    return Response.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 }
