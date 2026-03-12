@@ -10,7 +10,8 @@ jobs:
       - name: Correr sync completo
         id: sync
         run: |
-          SESSION=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # Formato sin caracteres especiales para evitar problemas en URLs
+          SESSION=$(date -u +"%Y%m%dT%H%M%SZ")
           echo "session=$SESSION" >> $GITHUB_OUTPUT
           echo "Session: $SESSION"
           page=0
