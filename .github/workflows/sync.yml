@@ -1,4 +1,4 @@
-name: Sync Alegra cada 2 horas
+name: Sync Alegra cada 6 horas
 
 on:
   schedule:
