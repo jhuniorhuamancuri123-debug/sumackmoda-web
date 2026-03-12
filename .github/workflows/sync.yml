@@ -1,32 +1,38 @@
 name: Sync Alegra cada 6 horas
-
 on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
-
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - name: Correr sync completo
+        id: sync
         run: |
+          SESSION=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "session=$SESSION" >> $GITHUB_OUTPUT
+          echo "Session: $SESSION"
           page=0
-
           while true; do
             echo "Sincronizando página $page..."
-
-            response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync?page=$page")
-
+            response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync?page=$page&session=$SESSION")
             echo "$response"
-
             if echo "$response" | grep -q '"hay_mas":false'; then
               echo "Sync completo en página $page"
               break
             fi
-
+            if echo "$response" | grep -q '"success":false'; then
+              echo "Error en página $page, abortando"
+              exit 1
+            fi
             page=$((page+1))
           done
 
-          echo "Proceso finalizado correctamente"
-          exit 0
+      - name: Limpiar productos eliminados
+        run: |
+          SESSION="${{ steps.sync.outputs.session }}"
+          echo "Limpiando con session: $SESSION"
+          response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync/cleanup?session=$SESSION")
+          echo "$response"
+          echo "Limpieza completada"
