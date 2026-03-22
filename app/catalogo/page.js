@@ -39,12 +39,15 @@ export default function CatalogoPage() {
     // Fotos principales de tabla modelos
     const codModelos = productosUnicos.map(p => p.cod_modelo);
     const { data: fotosData } = await supabase
-      .from('modelos')
-      .select('cod_modelo, foto_principal')
-      .in('cod_modelo', codModelos);
+  .from('modelos')
+  .select('cod_modelo, foto_principal, orden')
+  .in('cod_modelo', codModelos);
 
     const fotosMap = {};
-    if (fotosData) fotosData.forEach(f => { fotosMap[f.cod_modelo] = f.foto_principal; });
+    if (fotosData) fotosData.forEach(f => {
+  fotosMap[f.cod_modelo] = f.foto_principal;
+  fotosMap[f.cod_modelo + '_orden'] = f.orden ?? 999;
+});
 
     const coloresPorModelo = {};
   for (const p of data) {
@@ -53,12 +56,14 @@ export default function CatalogoPage() {
   }
 
   const productosConFoto = productosUnicos
-      .filter(p => fotosMap[p.cod_modelo] != null)
-      .map(p => ({
-        ...p,
-        foto_principal: fotosMap[p.cod_modelo],
-        totalColores: coloresPorModelo[p.cod_modelo]?.size || 1,
-      }));
+  .filter(p => fotosMap[p.cod_modelo] != null)
+  .map(p => ({
+    ...p,
+    foto_principal: fotosMap[p.cod_modelo],
+    totalColores: coloresPorModelo[p.cod_modelo]?.size || 1,
+    orden: fotosMap[p.cod_modelo + '_orden'] ?? 999,
+  }))
+  .sort((a, b) => a.orden - b.orden);
 
     setProductos(productosConFoto);
     setLoading(false);
