@@ -124,7 +124,6 @@ export default function EnviosRegistro() {
     ]);
     setLoading(false);
     setEnviado(true);
-    window.scrollTo({ top:0, behavior:"smooth" });
   }
 
   async function submitOtras() {
@@ -152,8 +151,21 @@ export default function EnviosRegistro() {
     ]);
     setLoading(false);
     setEnviado(true);
-    window.scrollTo({ top:0, behavior:"smooth" });
   }
+
+  // Scroll al top cuando se confirma el envío
+  useEffect(() => {
+    if (enviado) {
+      // Doble requestAnimationFrame asegura que React ya renderizó el DOM nuevo
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        });
+      });
+    }
+  }, [enviado]);
 
   return (
     <>
