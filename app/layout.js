@@ -33,12 +33,12 @@ export default function RootLayout({ children }) {
             <header className="navbar">
               <div className="navbar-inner">
                 <nav className="navbar-links">
-                  <a href="/">Inicio</a>
+                  <a href="/inicio">Inicio</a>
                   <a href="/catalogo">Catalogo</a>
                   <a href="/contacto">Contacto</a>
                   <a href="/guia-de-tallas">Guia de tallas</a>
                 </nav>
-                <a href="/" className="navbar-logo">SUMACK</a>
+                <a href="/inicio" className="navbar-logo">SUMACK</a>
                 <div className="navbar-icons">
                   <BuscadorBtn />
                   <PerfilBtn />
@@ -76,7 +76,7 @@ export default function RootLayout({ children }) {
                 <div className="footer-links">
                   <div className="footer-col">
                     <h4>Navegacion</h4>
-                    <a href="/">Inicio</a>
+                    <a href="/inicio">Inicio</a>
                     <a href="/catalogo">Catalogo</a>
                     <a href="/guia-de-tallas">Guia de tallas</a>
                     <a href="/contacto">Contacto</a>
