@@ -6,6 +6,7 @@ import CarritoPanel from './components/CarritoPanel';
 import CarritoBtn from './components/CarritoBtn';
 import BuscadorBtn from './components/BuscadorBtn';
 import PerfilBtn from './components/PerfilBtn';
+import Script from 'next/script';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -50,6 +51,20 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-FQ6GY0YT7S"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-FQ6GY0YT7S');
+          `}
+        </Script>
+      </head>
       <body className={`${playfair.variable} ${cormorant.variable}`}>
         <ToastProvider>
           <CarritoProvider>
