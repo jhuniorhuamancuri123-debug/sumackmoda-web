@@ -22,6 +22,10 @@ const cormorant = Cormorant_Garamond({
 export const metadata = {
   title: 'SUMACK - Moda Masculina Premium',
   description: 'Prendas premium para el caballero que define su propio estilo.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }) {
