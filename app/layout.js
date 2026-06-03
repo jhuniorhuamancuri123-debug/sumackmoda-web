@@ -11,12 +11,14 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   weight: ['400', '700', '900'],
+  display: 'swap', // ← agrega esto
 });
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   variable: '--font-cormorant',
   weight: ['300', '400', '500', '600'],
+  display: 'swap', // ← agrega esto
 });
 
 export const metadata = {

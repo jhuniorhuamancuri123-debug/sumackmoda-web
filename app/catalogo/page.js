@@ -8,7 +8,7 @@ export const metadata = {
     title: 'Catálogo | SUMACK - Polos Masculinos Premium',
     description: 'Colección completa de polos masculinos premium peruanos.',
     url: 'https://sumackmoda.com/catalogo',
-    images: [{ url: 'https://sumackmoda.com/hero.jpg' }],
+    images: [{ url: 'https://sumackmoda.com/og-image.jpg' }],
   },
 };
 

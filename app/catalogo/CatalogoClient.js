@@ -133,7 +133,7 @@ export default function CatalogoPage() {
           </div>
         ) : (
           <div className="productos-grid">
-            {productos.map(p => <ProductoCard key={p.id} producto={p} />)}
+            {productos.map((p, i) => <ProductoCard key={p.id} producto={p} priority={i === 0} />)}
           </div>
         )}
       </div>
@@ -141,7 +141,7 @@ export default function CatalogoPage() {
   );
 }
 
-function ProductoCard({ producto }) {
+function ProductoCard({ producto, priority = false }) {
   const { cod_modelo, foto_principal, nombre, precio, stock } = producto;
   const nombreModelo = nombre.split(' / ')[0]?.trim() || nombre;
   const imgUrl = `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${cod_modelo}/${foto_principal}.webp`;
@@ -150,7 +150,7 @@ function ProductoCard({ producto }) {
   return (
     <Link href={`/catalogo/${cod_modelo}`} className="producto-card">
       <div className="producto-img-wrap">
-        <ProductoImg src={imgUrl} alt={nombreModelo} hexColor="#e8e4dc" />
+        <ProductoImg src={imgUrl} alt={nombreModelo} hexColor="#e8e4dc" priority={priority} />
         {agotado && <span className="producto-badge agotado">Agotado</span>}
       </div>
       <p className="producto-nombre">{nombreModelo}</p>

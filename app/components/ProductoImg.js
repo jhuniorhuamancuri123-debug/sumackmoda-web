@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-export default function ProductoImg({ src, alt, hexColor }) {
+export default function ProductoImg({ src, alt, hexColor, priority = false }) {
   const [error, setError] = useState(false);
 
   if (error) {
@@ -22,6 +22,9 @@ export default function ProductoImg({ src, alt, hexColor }) {
     <img
       src={src}
       alt={alt}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : 'low'}
+      decoding="async"
       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       onError={() => setError(true)}
     />
