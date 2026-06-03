@@ -21,10 +21,27 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata = {
   title: 'SUMACK - Moda Masculina Premium',
-  description: 'Prendas premium para el caballero que define su propio estilo.',
+  description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú. Envíos a todo el país.',
+  keywords: 'polos peruanos, moda masculina Lima, polos premium Perú, ropa hombre Lima, marca peruana de polos',
   icons: {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'SUMACK - Moda Masculina Premium',
+    description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú.',
+    url: 'https://sumackmoda.com',
+    siteName: 'SUMACK',
+    images: [
+      {
+        url: 'https://sumackmoda.com/hero.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'SUMACK Moda Masculina Premium',
+      },
+    ],
+    locale: 'es_PE',
+    type: 'website',
   },
 };
 

@@ -2,6 +2,17 @@ import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import ProductoImg from '../components/ProductoImg';
 
+export const metadata = {
+  title: 'Inicio | SUMACK - Moda Masculina Premium',
+  description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
+  openGraph: {
+    title: 'Inicio | SUMACK - Moda Masculina Premium',
+    description: 'Polos masculinos premium hechos en Perú.',
+    url: 'https://sumackmoda.com/inicio',
+    images: [{ url: 'https://sumackmoda.com/hero.jpg' }],
+  },
+};
+
 export const revalidate = 1800;
 
 async function getProductosDestacados() {
