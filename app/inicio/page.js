@@ -2,16 +2,16 @@ import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import ProductoImg from '../components/ProductoImg';
 
-export const metadata = {
-  title: 'Inicio | SUMACK - Moda Masculina Premium',
-  description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
-  openGraph: {
+  export const metadata = {
     title: 'Inicio | SUMACK - Moda Masculina Premium',
-    description: 'Polos masculinos premium hechos en Perú.',
-    url: 'https://sumackmoda.com/inicio',
-    images: [{ url: 'https://sumackmoda.com/hero.jpg' }],
-  },
-};
+    description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
+    openGraph: {
+      title: 'Inicio | SUMACK - Moda Masculina Premium',
+      description: 'Polos masculinos premium hechos en Perú.',
+      url: 'https://sumackmoda.com/inicio',
+      images: [{ url: 'https://sumackmoda.com/og-image.jpg' }],
+    },
+  };
 
 export const revalidate = 1800;
 
@@ -60,7 +60,7 @@ export default async function Home() {
     <>
       {/* 1. HERO */}
       <section className="hero">
-        <img src="/hero.jpg" alt="SUMACK" className="hero-img" />
+        <img src="/hero.jpg" alt="SUMACK" className="hero-img" fetchpriority="high" />
         <div className="hero-content">
           <p className="hero-eyebrow">Nueva coleccion</p>
           <h1 className="hero-title">El arte de vestir bien</h1>
