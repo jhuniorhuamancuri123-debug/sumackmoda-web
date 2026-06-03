@@ -34,7 +34,7 @@ export const metadata = {
     siteName: 'SUMACK',
     images: [
       {
-        url: 'https://sumackmoda.com/hero.jpg',
+        url: 'https://sumackmoda.com/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'SUMACK Moda Masculina Premium',
