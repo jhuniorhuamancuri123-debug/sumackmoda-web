@@ -68,10 +68,24 @@ export default function CheckoutPage() {
   }
 
   function handleWhatsApp(tienda) {
-  const mensaje = construirMensaje(tienda);
-  window.open(`https://wa.me/${tienda.numero}?text=${mensaje}`, '_blank');
-  vaciar();
-}
+    const mensaje = construirMensaje(tienda);
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'Contact', {
+        content_ids: items.map(item => {
+          const partes = item.imagen?.split('/') || [];
+          const codModelo = partes[partes.length - 2] || '';
+          const codColor = item.color?.replace(/\s/g, '').toUpperCase() || '';
+          return `${codModelo}${codColor}${item.talla}`;
+        }),
+        content_type: 'product',
+        value: Number(total),
+        currency: 'PEN',
+        num_items: items.reduce((acc, i) => acc + i.cantidad, 0),
+      });
+    }
+    window.open(`https://wa.me/${tienda.numero}?text=${mensaje}`, '_blank');
+    vaciar();
+  }
 
   return (
     <div style={{paddingTop:'80px',minHeight:'100vh'}}>
