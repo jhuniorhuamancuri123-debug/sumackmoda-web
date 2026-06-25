@@ -124,7 +124,18 @@ export default function CarritoPanel() {
               </p>
             )}
             <a href="/checkout"
-              onClick={e => { if (!nombreValido) e.preventDefault(); }}
+              onClick={e => {
+                if (!nombreValido) { e.preventDefault(); return; }
+                if (typeof window !== 'undefined' && window.fbq) {
+                  window.fbq('track', 'InitiateCheckout', {
+                    content_ids: items.map(item => `${item.imagen?.split('/').slice(-2,-1)[0]}${item.color}${item.talla}`),
+                    content_type: 'product',
+                    value: Number(total),
+                    currency: 'PEN',
+                    num_items: items.reduce((acc, i) => acc + i.cantidad, 0),
+                  });
+                }
+              }}
               style={{
                 display:'block',width:'100%',padding:'1.1rem',
                 background: nombreValido ? 'var(--negro)' : 'var(--gris-claro)',
