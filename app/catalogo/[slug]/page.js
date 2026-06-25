@@ -211,16 +211,19 @@ useEffect(() => {
     const imagenActual = colorSeleccionado
       ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.webp`
       : null;
+      
     agregar({
       id: itemSeleccionado.id,
       nombre: nombreModelo,
       precio: Number(itemSeleccionado.precio),
+      codColor: colorSeleccionado,
       color: colorActual?.nombre_color || colorSeleccionado,
       talla: tallaSeleccionada,
       stockMax: itemSeleccionado.stock,
       imagen: imagenActual,
       hexColor: colorActual?.hex_color || '#e8e4dc',
     });
+
     toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'AddToCart', {

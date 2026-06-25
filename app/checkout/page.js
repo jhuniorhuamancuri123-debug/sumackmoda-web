@@ -74,7 +74,7 @@ export default function CheckoutPage() {
         content_ids: items.map(item => {
           const partes = item.imagen?.split('/') || [];
           const codModelo = partes[partes.length - 2] || '';
-          const codColor = item.color?.replace(/\s/g, '').toUpperCase() || '';
+          const codColor = item.codColor || item.color?.replace(/\s/g, '').replace(/\//g, '').toUpperCase() || '';
           return `${codModelo}${codColor}${item.talla}`;
         }),
         content_type: 'product',
