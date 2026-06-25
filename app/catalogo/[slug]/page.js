@@ -79,6 +79,19 @@ export default function ProductoPage({ params }) {
 
   useEffect(() => { cargarProducto(); }, [slug]);
 
+useEffect(() => {
+  if (!nombreModelo || !colorSeleccionado) return;
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', 'ViewContent', {
+      content_ids: [`${codModelo}${colorSeleccionado}`],
+      content_type: 'product_group',
+      value: Number(precioActual) || 0,
+      currency: 'PEN',
+      content_name: nombreModelo,
+    });
+  }
+}, [nombreModelo, colorSeleccionado]);
+
   useEffect(() => {
     if (!colorSeleccionado) return;
     cargarTallas(colorSeleccionado);
@@ -209,6 +222,15 @@ export default function ProductoPage({ params }) {
       hexColor: colorActual?.hex_color || '#e8e4dc',
     });
     toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'AddToCart', {
+        content_ids: [`${codModelo}${colorSeleccionado}${tallaSeleccionada}`],
+        content_type: 'product',
+        value: Number(itemSeleccionado.precio),
+        currency: 'PEN',
+        content_name: nombreModelo,
+      });
+    }
     setTimeout(() => setAgregando(false), 1500);
   }, [itemSeleccionado, colorSeleccionado, colorActual, tallaSeleccionada, nombreModelo, codModelo, agregar, toast]);
 
