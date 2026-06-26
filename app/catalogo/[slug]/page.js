@@ -102,6 +102,8 @@ useEffect(() => {
           content_type: 'product_group',
           value: Number(precioActual) || 0,
           content_name: nombreModelo,
+          fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] || new URLSearchParams(window.location.search).get('fbclid') || '',
+          fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] || '',
         }
       }),
     });
@@ -261,9 +263,12 @@ useEffect(() => {
           value: Number(itemSeleccionado.precio),
           content_name: nombreModelo,
           num_items: 1,
+          fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] || new URLSearchParams(window.location.search).get('fbclid') || '',
+          fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] || '',
         }
       }),
     });
+    
     setTimeout(() => setAgregando(false), 1500);
   }, [itemSeleccionado, colorSeleccionado, colorActual, tallaSeleccionada, nombreModelo, codModelo, agregar, toast]);
 

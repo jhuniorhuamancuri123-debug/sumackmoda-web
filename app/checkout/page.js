@@ -98,6 +98,8 @@ export default function CheckoutPage() {
           content_type: 'product',
           value: Number(total),
           num_items: numItems,
+          fbc: document.cookie.match(/_fbc=([^;]+)/)?.[1] || new URLSearchParams(window.location.search).get('fbclid') || '',
+          fbp: document.cookie.match(/_fbp=([^;]+)/)?.[1] || '',
         }
       }),
     });
