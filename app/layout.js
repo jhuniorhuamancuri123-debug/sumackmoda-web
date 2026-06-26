@@ -26,10 +26,14 @@ export const metadata = {
   title: 'SUMACK - Moda Masculina Premium',
   description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú. Envíos a todo el país.',
   keywords: 'polos peruanos, moda masculina Lima, polos premium Perú, ropa hombre Lima, marca peruana de polos',
+  verification: {
+    facebook: 'kux7dcvdcu12kbpr4ud8tsq6h99em5',
+  },
   icons: {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
   },
+  
   openGraph: {
     title: 'SUMACK - Moda Masculina Premium',
     description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú.',
