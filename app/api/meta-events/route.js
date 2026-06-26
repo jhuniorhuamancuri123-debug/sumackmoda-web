@@ -13,12 +13,13 @@ export async function POST(request) {
         event_id: `${eventName}-${Date.now()}`,
         action_source: 'website',
         event_source_url: eventData.url,
-        
+
         user_data: {
           client_ip_address: request.headers.get('x-forwarded-for')?.split(',')[0] || '',
           client_user_agent: request.headers.get('user-agent') || '',
           fbc: eventData.fbc || '',
           fbp: eventData.fbp || '',
+          ph: eventData.phone || '',
         },
 
         custom_data: {

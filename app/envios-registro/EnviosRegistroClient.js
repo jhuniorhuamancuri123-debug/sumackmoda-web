@@ -109,7 +109,27 @@ export default function EnviosRegistroClient() {
     const monto = "S/ "+parseFloat(shMonto).toFixed(2);
     const payload = { fecha, hora, nombre: shNombre.trim(), dni: shDni.trim(), telefono: shTel.trim(), monto, empresa: "SHALOM", agencia: selAg.n, tienda: tiendaParam };
     try { await fetch(SCRIPT_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) }); } catch(e) {}
+    // Enviar teléfono hasheado a Meta CAPI
+    try {
+      const telHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('51' + shTel.trim()));
+      const telHex = Array.from(new Uint8Array(telHash)).map(b => b.toString(16).padStart(2,'0')).join('');
+      await fetch('/api/meta-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'Lead',
+          eventData: {
+            url: window.location.href,
+            content_ids: [],
+            content_type: 'product',
+            value: parseFloat(shMonto) || 0,
+            phone: telHex,
+          }
+        })
+      });
+    } catch(e) {}
     setResumen([
+
       { label:"Nombre",                val: shNombre.trim() },
       { label:"DNI / CE",              val: shDni.trim() },
       { label:"Teléfono",              val: shTel.trim() },
@@ -128,6 +148,25 @@ export default function EnviosRegistroClient() {
     const monto = "S/ "+parseFloat(otMonto).toFixed(2);
     const payload = { fecha, hora, nombre: otNombre.trim(), dni: otDni.trim(), telefono: otTel.trim(), monto, empresa: otEmpresa.trim(), agencia: otAgencia.trim(), tienda: tiendaParam };
     try { await fetch(SCRIPT_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) }); } catch(e) {}
+    // Enviar teléfono hasheado a Meta CAPI
+    try {
+      const telHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('51' + otTel.trim()));
+      const telHex = Array.from(new Uint8Array(telHash)).map(b => b.toString(16).padStart(2,'0')).join('');
+      await fetch('/api/meta-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'Lead',
+          eventData: {
+            url: window.location.href,
+            content_ids: [],
+            content_type: 'product',
+            value: parseFloat(otMonto) || 0,
+            phone: telHex,
+          }
+        })
+      });
+    } catch(e) {}
     setResumen([
       { label:"Nombre",                val: otNombre.trim() },
       { label:"DNI / CE",              val: otDni.trim() },
