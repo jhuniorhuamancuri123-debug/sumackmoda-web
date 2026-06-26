@@ -33,7 +33,7 @@ export const metadata = {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
   },
-  
+
   openGraph: {
     title: 'SUMACK - Moda Masculina Premium',
     description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú.',
@@ -56,6 +56,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <head>
+  <meta name="facebook-domain-verification" content="kux7dcvdcu12kbpr4ud8tsq6h99em5" />
   <Script
     src="https://www.googletagmanager.com/gtag/js?id=G-FQ6GY0YT7S"
     strategy="afterInteractive"
