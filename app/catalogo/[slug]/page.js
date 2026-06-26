@@ -80,17 +80,32 @@ export default function ProductoPage({ params }) {
   useEffect(() => { cargarProducto(); }, [slug]);
 
 useEffect(() => {
-  if (!nombreModelo || !colorSeleccionado) return;
-  if (typeof window !== 'undefined' && window.fbq) {
-    window.fbq('track', 'ViewContent', {
-      content_ids: [`${codModelo}${colorSeleccionado}`],
-      content_type: 'product_group',
-      value: Number(precioActual) || 0,
-      currency: 'PEN',
-      content_name: nombreModelo,
+    if (!nombreModelo || !colorSeleccionado) return;
+    const contentId = `${codModelo}${colorSeleccionado}`;
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'ViewContent', {
+        content_ids: [contentId],
+        content_type: 'product_group',
+        value: Number(precioActual) || 0,
+        currency: 'PEN',
+        content_name: nombreModelo,
+      });
+    }
+    fetch('/api/meta-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'ViewContent',
+        eventData: {
+          url: window.location.href,
+          content_ids: [contentId],
+          content_type: 'product_group',
+          value: Number(precioActual) || 0,
+          content_name: nombreModelo,
+        }
+      }),
     });
-  }
-}, [nombreModelo, colorSeleccionado]);
+  }, [nombreModelo, colorSeleccionado]);
 
   useEffect(() => {
     if (!colorSeleccionado) return;
@@ -234,6 +249,21 @@ useEffect(() => {
         content_name: nombreModelo,
       });
     }
+    fetch('/api/meta-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'AddToCart',
+        eventData: {
+          url: window.location.href,
+          content_ids: [`${codModelo}${colorSeleccionado}${tallaSeleccionada}`],
+          content_type: 'product',
+          value: Number(itemSeleccionado.precio),
+          content_name: nombreModelo,
+          num_items: 1,
+        }
+      }),
+    });
     setTimeout(() => setAgregando(false), 1500);
   }, [itemSeleccionado, colorSeleccionado, colorActual, tallaSeleccionada, nombreModelo, codModelo, agregar, toast]);
 

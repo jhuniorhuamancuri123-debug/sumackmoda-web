@@ -69,20 +69,38 @@ export default function CheckoutPage() {
 
   function handleWhatsApp(tienda) {
     const mensaje = construirMensaje(tienda);
+    const contentIds = items.map(item => {
+      const partes = item.imagen?.split('/') || [];
+      const codModelo = partes[partes.length - 2] || '';
+      const codColor = item.codColor || '';
+      return `${codModelo}${codColor}${item.talla}`;
+    });
+    const numItems = items.reduce((acc, i) => acc + i.cantidad, 0);
+    // Pixel navegador
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'Contact', {
-        content_ids: items.map(item => {
-          const partes = item.imagen?.split('/') || [];
-          const codModelo = partes[partes.length - 2] || '';
-          const codColor = item.codColor || item.color?.replace(/\s/g, '').replace(/\//g, '').toUpperCase() || '';
-          return `${codModelo}${codColor}${item.talla}`;
-        }),
+        content_ids: contentIds,
         content_type: 'product',
         value: Number(total),
         currency: 'PEN',
-        num_items: items.reduce((acc, i) => acc + i.cantidad, 0),
+        num_items: numItems,
       });
     }
+    // CAPI servidor
+    fetch('/api/meta-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'Contact',
+        eventData: {
+          url: window.location.href,
+          content_ids: contentIds,
+          content_type: 'product',
+          value: Number(total),
+          num_items: numItems,
+        }
+      }),
+    });
     window.open(`https://wa.me/${tienda.numero}?text=${mensaje}`, '_blank');
     vaciar();
   }
