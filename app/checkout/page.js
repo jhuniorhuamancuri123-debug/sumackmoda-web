@@ -76,6 +76,7 @@ export default function CheckoutPage() {
       return `${codModelo}${codColor}${item.talla}`;
     });
     const numItems = items.reduce((acc, i) => acc + i.cantidad, 0);
+    const eventId = `Contact-${Date.now()}`;
     // Pixel navegador
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'Contact', {
@@ -84,7 +85,7 @@ export default function CheckoutPage() {
         value: Number(total),
         currency: 'PEN',
         num_items: numItems,
-      });
+      }, { eventID: eventId });
     }
     // CAPI servidor
     fetch('/api/meta-events', {
@@ -92,6 +93,7 @@ export default function CheckoutPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventName: 'Contact',
+        eventId,
         eventData: {
           url: window.location.href,
           content_ids: contentIds,
