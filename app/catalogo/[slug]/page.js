@@ -241,6 +241,7 @@ useEffect(() => {
       stockMax: itemSeleccionado.stock,
       imagen: imagenActual,
       hexColor: colorActual?.hex_color || '#e8e4dc',
+      urlProducto: `${window.location.origin}/catalogo/${codModelo.toLowerCase()}`,
     });
 
     toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);

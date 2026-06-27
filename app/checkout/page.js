@@ -95,7 +95,7 @@ export default function CheckoutPage() {
         eventName: 'Contact',
         eventId,
         eventData: {
-          url: window.location.href,
+          url: items[0]?.urlProducto || window.location.href,
           content_ids: contentIds,
           content_type: 'product',
           value: Number(total),
