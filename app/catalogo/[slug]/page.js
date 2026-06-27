@@ -82,6 +82,7 @@ export default function ProductoPage({ params }) {
 useEffect(() => {
     if (!nombreModelo || !colorSeleccionado) return;
     const contentId = `${codModelo}${colorSeleccionado}`;
+    const eventId = `VC-${codModelo}-${colorSeleccionado}-${Date.now()}`;
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'ViewContent', {
         content_ids: [contentId],
@@ -89,13 +90,14 @@ useEffect(() => {
         value: Number(precioActual) || 0,
         currency: 'PEN',
         content_name: nombreModelo,
-      });
+      }, { eventID: eventId });
     }
     fetch('/api/meta-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventName: 'ViewContent',
+        eventId,
         eventData: {
           url: window.location.href,
           content_ids: [contentId],
@@ -242,6 +244,7 @@ useEffect(() => {
     });
 
     toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);
+    const eventId = `ATC-${codModelo}-${colorSeleccionado}-${tallaSeleccionada}-${Date.now()}`;
     if (typeof window !== 'undefined' && window.fbq) {
       window.fbq('track', 'AddToCart', {
         content_ids: [`${codModelo}${colorSeleccionado}${tallaSeleccionada}`],
@@ -249,13 +252,14 @@ useEffect(() => {
         value: Number(itemSeleccionado.precio),
         currency: 'PEN',
         content_name: nombreModelo,
-      });
+      }, { eventID: eventId });
     }
     fetch('/api/meta-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventName: 'AddToCart',
+        eventId,
         eventData: {
           url: window.location.href,
           content_ids: [`${codModelo}${colorSeleccionado}${tallaSeleccionada}`],

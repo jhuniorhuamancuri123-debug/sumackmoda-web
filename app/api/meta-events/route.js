@@ -1,7 +1,7 @@
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { eventName, eventData } = body;
+    const { eventName, eventData, eventId } = body;
 
     const payload = {
       ...(process.env.META_TEST_EVENT_CODE && {
@@ -10,7 +10,7 @@ export async function POST(request) {
       data: [{
         event_name: eventName,
         event_time: Math.floor(Date.now() / 1000),
-        event_id: `${eventName}-${Date.now()}`,
+        event_id: eventId || `${eventName}-${Date.now()}`,
         action_source: 'website',
         event_source_url: eventData.url,
 
