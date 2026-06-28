@@ -30,7 +30,10 @@ export default function CarritoPanel() {
       <div style={{
         position:'fixed',top:0,
         right: abierto ? 0 : '-440px',
-        width:'420px',maxWidth:'100vw',height:'100vh',
+        width:'420px',maxWidth:'100vw',
+        height:'100%',
+        height:'-webkit-fill-available',
+        maxHeight:'100dvh',
         background:'var(--blanco)',zIndex:201,
         transition:'right 0.35s cubic-bezier(.4,0,.2,1)',
         display:'flex',flexDirection:'column',
@@ -113,7 +116,7 @@ export default function CarritoPanel() {
 
         {/* FOOTER */}
         {items.length > 0 && (
-          <div style={{padding:'1.5rem 2rem',borderTop:'1px solid var(--gris-claro)'}}>
+          <div style={{padding:'1.5rem 2rem 2.5rem',borderTop:'1px solid var(--gris-claro)',flexShrink:0}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem'}}>
               <span style={{fontFamily:'var(--font-body)',fontSize:'1rem',fontWeight:500}}>Total</span>
               <span style={{fontFamily:'var(--font-body)',fontSize:'1.2rem',fontWeight:700,color:'var(--marron)'}}>S/. {Number(total).toFixed(2)}</span>
