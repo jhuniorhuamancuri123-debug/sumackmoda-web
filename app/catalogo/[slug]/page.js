@@ -92,6 +92,15 @@ useEffect(() => {
         content_name: nombreModelo,
       }, { eventID: eventId });
     }
+    if (typeof window !== 'undefined' && window.ttq) {
+      window.ttq.track('ViewContent', {
+        content_id: contentId,
+        content_type: 'product',
+        content_name: nombreModelo,
+        value: Number(precioActual) || 0,
+        currency: 'PEN',
+      });
+    }
     fetch('/api/meta-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -254,6 +263,15 @@ useEffect(() => {
         currency: 'PEN',
         content_name: nombreModelo,
       }, { eventID: eventId });
+    }
+    if (typeof window !== 'undefined' && window.ttq) {
+      window.ttq.track('AddToCart', {
+        content_id: `${codModelo}${colorSeleccionado}${tallaSeleccionada}`,
+        content_type: 'product',
+        content_name: nombreModelo,
+        value: Number(itemSeleccionado.precio),
+        currency: 'PEN',
+      });
     }
     fetch('/api/meta-events', {
       method: 'POST',
