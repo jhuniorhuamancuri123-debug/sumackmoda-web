@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const TIENDAS = [
-  { id: 'piso6', label: '🏬 Tienda 6to Piso', numero: '987774229' },
-  { id: 'piso9', label: '🏬 Tienda 9no Piso', numero: '968267313' },
+  { id: 'piso9', label: 'Confirmar pedido por WhatsApp', numero: '968267313' },
 ];
 
 const ENVIOS = [
@@ -113,7 +112,7 @@ export default function CheckoutPage() {
     <div style={{paddingTop:'80px',minHeight:'100vh'}}>
       <div style={{maxWidth:'680px',margin:'0 auto',padding:'3rem 1.5rem'}}>
         <h1 style={{fontFamily:'var(--font-display)',fontSize:'2rem',fontWeight:700,marginBottom:'0.5rem'}}>Tu pedido</h1>
-        <p style={{fontFamily:'var(--font-body)',fontSize:'0.9rem',color:'var(--gris)',marginBottom:'2.5rem'}}>
+        <p style={{fontFamily:'var(--font-body)',fontSize:'1rem',color:'var(--negro)',marginBottom:'2.5rem',fontWeight:500}}>
           Hola <strong>{nombreCliente}</strong>, revisa tu pedido antes de confirmar.
         </p>
 
@@ -126,8 +125,8 @@ export default function CheckoutPage() {
                   {item.imagen && <img src={item.imagen} alt={item.nombre} style={{width:'100%',height:'100%',objectFit:'cover'}} />}
                 </div>
                 <div>
-                  <p style={{fontWeight:600,fontSize:'0.9rem',marginBottom:'0.2rem'}}>{item.nombre}</p>
-                  <p style={{color:'var(--gris)',fontSize:'0.8rem'}}>{item.color} / Talla {item.talla} / x{item.cantidad}</p>
+                  <p style={{fontWeight:700,fontSize:'1rem',marginBottom:'0.2rem'}}>{item.nombre}</p>
+                  <p style={{color:'var(--negro)',fontSize:'0.85rem',fontWeight:500}}>{item.color} / Talla {item.talla} / x{item.cantidad}</p>
                 </div>
               </div>
               <p style={{fontWeight:600,color:'var(--marron)',fontSize:'0.95rem'}}>S/. {(item.precio * item.cantidad).toFixed(2)}</p>
@@ -137,41 +136,41 @@ export default function CheckoutPage() {
 
         {/* TOTAL */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'1rem 0',marginBottom:'2rem'}}>
-          <span style={{fontFamily:'var(--font-body)',fontWeight:600,fontSize:'1rem'}}>Total</span>
-          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'1.3rem',color:'var(--marron)'}}>S/. {Number(total).toFixed(2)}</span>
+          <span style={{fontFamily:'var(--font-body)',fontWeight:700,fontSize:'1.1rem'}}>Total</span>
+          <span style={{fontFamily:'var(--font-body)',fontWeight:800,fontSize:'1.4rem',color:'var(--marron)'}}>S/. {Number(total).toFixed(2)}</span>
         </div>
 
         {/* ENVÍO */}
         <div style={{marginBottom:'2rem'}}>
-          <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',letterSpacing:'0.15em',textTransform:'uppercase',marginBottom:'1rem',fontWeight:600}}>
+          <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:'1rem',fontWeight:700,color:'var(--negro)'}}>
             🚚 Elige tu tipo de envío
           </p>
           <div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}>
             {ENVIOS.map(e => (
               <button key={e.id} onClick={() => setEnvio(e.id)}
                 style={{padding:'0.9rem 1rem',border:envio===e.id?'2px solid var(--negro)':'1px solid var(--gris-claro)',background:envio===e.id?'var(--negro)':'transparent',color:envio===e.id?'var(--blanco)':'var(--negro)',fontFamily:'var(--font-body)',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',transition:'all 0.2s',textAlign:'left'}}>
-                <span style={{fontWeight:600,fontSize:'0.9rem'}}>{e.label}</span>
-                <span style={{fontSize:'0.78rem',color:envio===e.id?'rgba(255,255,255,0.7)':'var(--gris)'}}>{e.detalle}</span>
+                <span style={{fontWeight:700,fontSize:'0.95rem'}}>{e.label}</span>
+                <span style={{fontSize:'0.82rem',fontWeight:500,color:envio===e.id?'rgba(255,255,255,0.85)':'var(--negro)'}}>{e.detalle}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* NOTA ENVÍO */}
-        <div style={{padding:'1rem',background:'var(--crema)',borderLeft:'3px solid var(--marron)',fontFamily:'var(--font-body)',fontSize:'0.82rem',lineHeight:1.7,marginBottom:'2rem'}}>
+        <div style={{padding:'1rem',background:'var(--crema)',borderLeft:'3px solid var(--marron)',fontFamily:'var(--font-body)',fontSize:'0.88rem',lineHeight:1.7,marginBottom:'2rem',fontWeight:500,color:'var(--negro)'}}>
           <p>El costo de envío se coordina directamente con la vendedora por WhatsApp según tu ubicación.</p>
         </div>
 
         {/* AVISO */}
         <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderLeft:'4px solid #25D366',padding:'1rem 1.25rem',marginBottom:'1.5rem',fontFamily:'var(--font-body)'}}>
-          <p style={{fontSize:'0.88rem',lineHeight:1.6,color:'#166534'}}>
-            <strong>¿Cómo funciona?</strong> Elige la tienda con la que estás hablando. Se abrirá WhatsApp con tu pedido completo ya redactado. Solo envía el mensaje y te atendemos al instante.
-          </p>
+          <p style={{fontSize:'0.92rem',lineHeight:1.7,color:'#166534',fontWeight:500}}>
+              <strong>¿Cómo funciona?</strong> Se abrirá WhatsApp con tu pedido completo ya redactado. Solo envía el mensaje y te atendemos al instante.
+            </p>
         </div>
 
         {/* DOS BOTONES WHATSAPP */}
         <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',letterSpacing:'0.15em',textTransform:'uppercase',marginBottom:'0.75rem',fontWeight:600,textAlign:'center'}}>
-          Selecciona la tienda
+          
         </p>
         <div style={{display:'flex',flexDirection:'column',gap:'0.75rem',marginBottom:'1rem'}}>
           {TIENDAS.map(tienda => (
