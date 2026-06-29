@@ -7,10 +7,11 @@ export async function POST(req) {
     test_event_code: 'TEST51470',
     event: eventName,
     event_id: eventId,
-    timestamp: new Date().toISOString(),
+    timestamp: Math.floor(Date.now() / 1000),
     context: {
       page: { url: eventData.url || '' },
-      user: {}
+      user_agent: req.headers.get('user-agent') || '',
+      ip: req.headers.get('x-forwarded-for') || '',
     },
     properties: {
       content_type: eventData.content_type || 'product',
@@ -40,8 +41,10 @@ export async function POST(req) {
       }
     );
     const data = await res.json();
+    console.log('TikTok eAPI response:', JSON.stringify(data));
     return Response.json(data);
   } catch (err) {
+    console.error('TikTok eAPI error:', err.message);
     return Response.json({ error: err.message }, { status: 500 });
   }
 }
