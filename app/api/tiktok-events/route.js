@@ -7,11 +7,13 @@ export async function POST(req) {
     test_event_code: 'TEST51470',
     event: eventName,
     event_id: eventId,
+    event_source: 'web',
+    event_source_url: eventData.url || '',
     timestamp: Math.floor(Date.now() / 1000),
     context: {
       page: { url: eventData.url || '' },
       user_agent: req.headers.get('user-agent') || '',
-      ip: req.headers.get('x-forwarded-for') || '',
+      ip: req.headers.get('x-forwarded-for')?.split(',')[0] || '',
     },
     properties: {
       content_type: eventData.content_type || 'product',
@@ -19,10 +21,10 @@ export async function POST(req) {
         content_id: id,
         content_type: eventData.content_type || 'product',
         content_name: eventData.content_name || '',
-        price: eventData.value || 0,
+        price: Number(eventData.value) || 0,
         quantity: 1,
       })),
-      value: eventData.value || 0,
+      value: Number(eventData.value) || 0,
       currency: 'PEN',
       num_items: eventData.num_items || 1,
     }
