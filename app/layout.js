@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '3915121135274598');
-      fbq('track', 'PageView');
+      fbq('track', 'PageView', {}, { eventID: 'PV-' + Date.now() });
     `}
   </Script>
   <Script id="tiktok-pixel" strategy="afterInteractive">

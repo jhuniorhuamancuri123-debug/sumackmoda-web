@@ -18,8 +18,9 @@ export async function POST(request) {
           client_ip_address: request.headers.get('x-forwarded-for')?.split(',')[0] || '',
           client_user_agent: request.headers.get('user-agent') || '',
           fbc: eventData.fbc || '',
-          fbp: eventData.fbp || '',
-          ph: eventData.phone || '',
+        fbp: eventData.fbp || '',
+        ph: eventData.phone || '',
+        external_id: eventData.fbp || eventData.fbc || '',
         },
 
         custom_data: {
