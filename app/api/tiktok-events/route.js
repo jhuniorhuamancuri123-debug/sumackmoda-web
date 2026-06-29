@@ -4,6 +4,7 @@ export async function POST(req) {
 
   const payload = {
     pixel_code: process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID,
+    test_event_code: 'TEST51470',
     event: eventName,
     event_id: eventId,
     timestamp: new Date().toISOString(),
