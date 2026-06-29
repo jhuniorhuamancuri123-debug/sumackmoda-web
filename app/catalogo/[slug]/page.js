@@ -101,6 +101,22 @@ useEffect(() => {
         currency: 'PEN',
       });
     }
+    fetch('/api/tiktok-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'ViewContent',
+        eventId,
+        eventData: {
+          url: window.location.href,
+          content_ids: [contentId],
+          content_type: 'product',
+          value: Number(precioActual) || 0,
+          content_name: nombreModelo,
+          num_items: 1,
+        }
+      }),
+    });
     fetch('/api/meta-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -273,6 +289,22 @@ useEffect(() => {
         currency: 'PEN',
       });
     }
+    fetch('/api/tiktok-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'AddToCart',
+        eventId,
+        eventData: {
+          url: window.location.href,
+          content_ids: [`${codModelo}${colorSeleccionado}${tallaSeleccionada}`],
+          content_type: 'product',
+          value: Number(itemSeleccionado.precio),
+          content_name: nombreModelo,
+          num_items: 1,
+        }
+      }),
+    });
     fetch('/api/meta-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
