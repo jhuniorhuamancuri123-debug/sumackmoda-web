@@ -97,10 +97,11 @@ useEffect(() => {
         content_id: contentId,
         content_type: 'product',
         content_name: nombreModelo,
-        value: Number(precioActual) || 0,
+        value: Number(tallasInfo.find(t => t.disponible)?.precio) || 0,
         currency: 'PEN',
       });
     }
+    const precioParaEvento = tallasInfo.find(t => t.disponible)?.precio || 0;
     fetch('/api/tiktok-events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -111,7 +112,7 @@ useEffect(() => {
           url: window.location.href,
           content_ids: [contentId],
           content_type: 'product',
-          value: Number(precioActual) || 0,
+          value: Number(precioParaEvento) || 0,
           content_name: nombreModelo,
           num_items: 1,
         }
