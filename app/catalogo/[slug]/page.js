@@ -80,7 +80,7 @@ export default function ProductoPage({ params }) {
   useEffect(() => { cargarProducto(); }, [slug]);
 
 useEffect(() => {
-    if (!nombreModelo || !colorSeleccionado) return;
+    if (!nombreModelo || !colorSeleccionado || tallasInfo.length === 0) return;
     const contentId = `${codModelo}${colorSeleccionado}`;
     const eventId = `VC-${codModelo}-${colorSeleccionado}-${Date.now()}`;
     if (typeof window !== 'undefined' && window.fbq) {
@@ -135,7 +135,7 @@ useEffect(() => {
         }
       }),
     });
-  }, [nombreModelo, colorSeleccionado]);
+  }, [nombreModelo, colorSeleccionado, tallasInfo]);
 
   useEffect(() => {
     if (!colorSeleccionado) return;
