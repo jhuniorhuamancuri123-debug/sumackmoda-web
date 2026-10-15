@@ -7,9 +7,10 @@
 //          nombre, DNI/CE, celular, empresa, agencia Shalom (con opciones) y monto.
 //  Paso 3  La vendedora revisa/corrige. Mientras falte un dato obligatorio
 //          (nombre, DNI/CE, celular, agencia) NO se puede registrar.
-//  Paso 4  "Registrar envíos": guarda en el MISMO Google Sheet que
-//          /envios-registro. La etiqueta de 80 mm la imprime SOLA la PC de la
-//          tienda (programa "TIENDAS - ENVIOS" con impresión automática).
+//  Paso 4  "Registrar e imprimir": guarda en el MISMO Google Sheet que
+//          /envios-registro y envía las etiquetas por WiFi a la PC de la tienda
+//          (programa "TIENDAS - ENVIOS", http://IP:5002/imprimir-wifi), que las
+//          imprime directo en la impresora de 80 mm. La IP viene en el QR (?pc=).
 //          Opcional: "Imprimir aquí (A4)" con el formato de GestorAlegra.
 //          El monto es opcional: si se pone sale como "Código".
 // ════════════════════════════════════════════════════════════════════════════
@@ -70,8 +71,13 @@ export default function EnviosVentasClient() {
   const [analizando, setAnalizando] = useState(false);
   const [registrando, setRegistrando] = useState(false);
   const [aviso, setAviso] = useState("");
+  const [pc, setPc] = useState("");            // IP de la PC de la tienda (impresión por WiFi)
+  const [editPc, setEditPc] = useState(false);
+  const [ultimoLote, setUltimoLote] = useState(null);
 
   useEffect(() => {
+    const ipUrl = (sp.get("pc") || "").trim();
+    if (ipUrl) { setPc(ipUrl); lsSet("ev_pc", ipUrl); } else setPc(lsGet("ev_pc"));
     const t = sp.get("tienda") || lsGet("ev_tienda");
     if (t === "9no" || t === "6to") setTienda(t);
     const p = lsGet("ev_pin");
@@ -150,6 +156,10 @@ export default function EnviosVentasClient() {
   async function registrarTodos() {
     const porRegistrar = clientes.filter((c) => c.estado === "listo");
     if (!porRegistrar.length || bloqueos.length) return;
+    // La pestaña de impresión se abre YA (en el clic) para que el navegador no la bloquee;
+    // cuando termina el registro, se envían los datos por WiFi a la PC de la tienda.
+    const w = pc ? window.open("about:blank", "_blank") : null;
+    if (w) w.document.write("<p style='font-family:Arial;padding:30px;font-size:18px'>Registrando envíos…</p>");
     setRegistrando(true);
     const { fecha, hora } = fechaHora();
     const hechos = [];
@@ -181,9 +191,25 @@ export default function EnviosVentasClient() {
       }
     }
     setRegistrando(false);
-    // La impresión de las etiquetas la hace sola la PC de la tienda (programa "TIENDAS - ENVIOS").
-    // Aquí solo queda el botón opcional "Imprimir aquí (A4)".
-    if (hechos.length) window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    if (hechos.length) {
+      const lote = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      setUltimoLote({ lote, regs: hechos });
+      if (w) w.location.href = urlImpresionWifi(pc, lote, hechos);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    } else if (w) {
+      w.close();
+    }
+  }
+
+  // Reenviar el último grupo a la impresora de la tienda (si la pestaña se bloqueó o falló)
+  function imprimirEnTienda() {
+    if (!pc) { setEditPc(true); return; }
+    if (ultimoLote) window.open(urlImpresionWifi(pc, ultimoLote.lote, ultimoLote.regs), "_blank");
+  }
+
+  function guardarPc(v) {
+    const ip = v.trim().replace(/^https?:\/\//, "").replace(/[:/].*$/, "");
+    setPc(ip); lsSet("ev_pc", ip); setEditPc(false);
   }
 
   function reimprimir() {
@@ -246,11 +272,25 @@ export default function EnviosVentasClient() {
           ))}
         </div>
 
+        <div className="ev-bar">
+          <span className="ev-bar-l">Impresora:</span>
+          {editPc ? (
+            <span className="ev-pc-edit">
+              <input className="ev-input" defaultValue={pc} placeholder="IP de la PC, ej. 192.168.1.35" inputMode="decimal" id="ev-pc-in" />
+              <button className="ev-chip on" onClick={() => guardarPc(document.getElementById("ev-pc-in").value)}>OK</button>
+            </span>
+          ) : (
+            <button className={"ev-chip" + (pc ? "" : " warn")} onClick={() => setEditPc(true)}>
+              {pc ? "🖨 PC " + pc + " ✎" : "⚠ Configurar PC de la tienda"}
+            </button>
+          )}
+        </div>
+
         <ol className="ev-pasos">
           <li className={porAnalizar || (!listos.length && !registrados) ? "on" : ""}>Pega el mensaje de cada cliente</li>
           <li className={analizando ? "on" : ""}>Presiona <b>Analizar con IA</b></li>
           <li className={listos.length ? "on" : ""}>Revisa y corrige los datos</li>
-          <li className={registrados ? "on" : ""}><b>Registrar</b> — la tienda imprime sola</li>
+          <li className={registrados ? "on" : ""}><b>Registrar e imprimir</b> (llega por WiFi a la PC de la tienda)</li>
         </ol>
 
         {clientes.map((c, i) => (
@@ -281,16 +321,17 @@ export default function EnviosVentasClient() {
               )}
               <button className="ev-btn ev-btn-ok" onClick={registrarTodos}
                 disabled={registrando || analizando || bloqueos.length > 0 || sinAnalizar.length > 0}>
-                {registrando ? "Registrando…" : `✔ Registrar envíos (${listos.length})`}
+                {registrando ? "Registrando…" : `✔ Registrar e imprimir (${listos.length})`}
               </button>
             </>
           )}
 
           {registrados > 0 && !listos.length && (
             <div className="ev-ok-box">
-              ✅ {registrados} envío(s) registrados. La etiqueta se imprimirá sola en la tienda (programa de envíos abierto).
+              ✅ {registrados} envío(s) registrados.{pc ? " Las etiquetas se enviaron a la impresora de la tienda." : " Configura la PC de la tienda para imprimir."}
+              {ultimoLote && <button className="ev-btn ev-btn-sec" onClick={imprimirEnTienda}>🖨 Reenviar a la impresora de la tienda</button>}
               <div className="ev-ok-btns">
-                <button className="ev-btn ev-btn-sec" onClick={reimprimir}>🖨 Imprimir aquí (A4)</button>
+                <button className="ev-btn ev-btn-sec" onClick={reimprimir}>Imprimir aquí (A4)</button>
                 <button className="ev-btn" onClick={nuevoLote}>Nuevo lote</button>
               </div>
             </div>
@@ -446,6 +487,20 @@ function Campo({ label, err, children }) {
   );
 }
 
+// ── Impresión por WiFi: el celular abre http://IP-PC:5002/imprimir-wifi?d=… ──
+// (navegación normal, no fetch, para que el navegador lo permita desde https)
+function urlImpresionWifi(ip, lote, regs) {
+  const datos = {
+    lote,
+    r: regs.map((r) => ({ n: r.nombre, d: r.dni, t: r.telefono, a: r.agencia, e: r.empresa, m: r.monto, f: r.fecha, h: r.hora, ti: r.tienda })),
+  };
+  const bytes = new TextEncoder().encode(JSON.stringify(datos));
+  let bin = "";
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  const b64 = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `http://${ip}:5002/imprimir-wifi?d=${b64}`;
+}
+
 // ── Impresión: mismo diseño que GestorAlegra → Envíos (A4, 4 guías por hoja) ──
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -518,6 +573,9 @@ const CSS = `
   .ev-bar-l { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #666; }
   .ev-chip { border: 1.5px solid #ddddd8; background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .ev-chip.on { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
+  .ev-chip.warn { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+  .ev-pc-edit { display: flex; gap: 6px; flex: 1; }
+  .ev-pc-edit .ev-input { padding: 7px 10px; font-size: 14px; }
   .ev-card { background: #fff; border: 1.5px solid #ddddd8; border-radius: 16px; overflow: hidden; }
   .ev-card.ev-done { border-color: #6ee7b7; opacity: .85; }
   .ev-card.ev-falta { border-color: #fca5a5; }
