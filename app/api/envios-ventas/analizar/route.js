@@ -66,8 +66,9 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || MODELO_DEFECTO,
-        max_tokens: 1024,
-        temperature: 0,
+        max_tokens: 2048,
+        // OJO: los modelos 5.5 (Haiku/Sonnet) NO aceptan temperature/top_p/top_k
+        // distintos al valor por defecto → error 400. No agregarlos.
         system: [
           { type: "text", text: INSTRUCCIONES_IA },
           { type: "text", text: LISTADO_AGENCIAS, cache_control: { type: "ephemeral" } },
@@ -86,7 +87,7 @@ export async function POST(req) {
   if (!r.ok) {
     let det = "";
     try { det = (await r.json())?.error?.message || ""; } catch {}
-    let msg = `Error de la IA (${r.status}).`;
+    let msg = `Error de la IA (${r.status})${det ? ": " + det : "."}`;
     if (r.status === 401) msg = "La clave ANTHROPIC_API_KEY no es válida.";
     if (r.status === 429) msg = "La IA está ocupada, espera unos segundos y vuelve a intentar.";
     if (/credit|billing/i.test(det)) msg = "Sin créditos en la cuenta de la API de Claude (console.anthropic.com).";
