@@ -68,11 +68,19 @@ export function buscarAgencias(q, limite = 30) {
 export function filtrarAgencias(q, limite = 50) {
   const ts = normTxt(q).split(" ").filter(Boolean);
   if (!ts.length) return [];
-  return INDICE
-    .filter((it) => {
-      const hay = it.nombre + " " + it.lugar + " " + it.dir;
-      return ts.every((t) => hay.includes(t));
-    })
-    .slice(0, limite)
-    .map((it) => it.a);
+  const res = [];
+  for (const it of INDICE) {
+    let p = 0;
+    let ok = true;
+    for (const t of ts) {
+      const re = new RegExp("(^| )" + t);
+      if (re.test(it.nombre)) p += 3;
+      else if (re.test(it.lugar)) p += 2;
+      else if (re.test(it.dir)) p += 1;
+      else { ok = false; break; }
+    }
+    if (ok) res.push({ a: it.a, p });
+  }
+  res.sort((x, y) => y.p - x.p || x.a.n.localeCompare(y.a.n));
+  return res.slice(0, limite).map((r) => r.a);
 }
