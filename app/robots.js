@@ -14,6 +14,7 @@ export default function robots() {
           '/api',
           '/checkout',
           '/envios-registro',
+          '/envios-ventas',
           '/context',
           '/lib',
         ],
