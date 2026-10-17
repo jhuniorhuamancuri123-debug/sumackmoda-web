@@ -9,7 +9,7 @@
 //          (nombre, DNI/CE, celular, agencia) NO se puede registrar.
 //  Paso 4  "Registrar e imprimir": guarda en el MISMO Google Sheet que
 //          /envios-registro y envía las etiquetas por WiFi a la PC de la tienda
-//          (programa "TIENDAS - ENVIOS", http://IP:5002/imprimir-wifi), que las
+//          (servicio_impresion.py, http://IP:5003/imprimir-wifi), que las
 //          imprime directo en la impresora de 80 mm. La IP viene en el QR (?pc=).
 //          Opcional: "Imprimir aquí (A4)" con el formato de GestorAlegra.
 //          El monto es opcional: si se pone sale como "Código".
@@ -280,9 +280,12 @@ export default function EnviosVentasClient() {
               <button className="ev-chip on" onClick={() => guardarPc(document.getElementById("ev-pc-in").value)}>OK</button>
             </span>
           ) : (
-            <button className={"ev-chip" + (pc ? "" : " warn")} onClick={() => setEditPc(true)}>
-              {pc ? "🖨 PC " + pc + " ✎" : "⚠ Configurar PC de la tienda"}
-            </button>
+            <>
+              <button className={"ev-chip" + (pc ? "" : " warn")} onClick={() => setEditPc(true)}>
+                {pc ? "🖨 PC " + pc + " ✎" : "⚠ Configurar PC de la tienda"}
+              </button>
+              {pc && <a className="ev-chip" href={`http://${pc}:${PUERTO_IMPRESION}/`} target="_blank" rel="noreferrer">🔌 Probar</a>}
+            </>
           )}
         </div>
 
@@ -329,6 +332,7 @@ export default function EnviosVentasClient() {
           {registrados > 0 && !listos.length && (
             <div className="ev-ok-box">
               ✅ {registrados} envío(s) registrados.{pc ? " Las etiquetas se enviaron a la impresora de la tienda." : " Configura la PC de la tienda para imprimir."}
+              {ultimoLote && pc && <div style={{ fontWeight: 400, fontSize: 13 }}>Si la pestaña de impresión no cargó, la PC está apagada, dormida o en otra red. Revisa y presiona:</div>}
               {ultimoLote && <button className="ev-btn ev-btn-sec" onClick={imprimirEnTienda}>🖨 Reenviar a la impresora de la tienda</button>}
               <div className="ev-ok-btns">
                 <button className="ev-btn ev-btn-sec" onClick={reimprimir}>Imprimir aquí (A4)</button>
@@ -487,7 +491,9 @@ function Campo({ label, err, children }) {
   );
 }
 
-// ── Impresión por WiFi: el celular abre http://IP-PC:5002/imprimir-wifi?d=… ──
+// ── Impresión por WiFi: el celular abre http://IP-PC:5003/imprimir-wifi?d=… ──
+// 5003 = servicio de impresión de la PC de la tienda (arranca solo con Windows).
+const PUERTO_IMPRESION = 5003;
 // (navegación normal, no fetch, para que el navegador lo permita desde https)
 function urlImpresionWifi(ip, lote, regs) {
   const datos = {
@@ -498,7 +504,7 @@ function urlImpresionWifi(ip, lote, regs) {
   let bin = "";
   bytes.forEach((b) => { bin += String.fromCharCode(b); });
   const b64 = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  return `http://${ip}:5002/imprimir-wifi?d=${b64}`;
+  return `http://${ip}:${PUERTO_IMPRESION}/imprimir-wifi?d=${b64}`;
 }
 
 // ── Impresión: mismo diseño que GestorAlegra → Envíos (A4, 4 guías por hoja) ──
@@ -573,6 +579,7 @@ const CSS = `
   .ev-bar-l { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #666; }
   .ev-chip { border: 1.5px solid #ddddd8; background: #fff; border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .ev-chip.on { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
+  a.ev-chip { text-decoration: none; color: #0a0a0a; }
   .ev-chip.warn { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
   .ev-pc-edit { display: flex; gap: 6px; flex: 1; }
   .ev-pc-edit .ev-input { padding: 7px 10px; font-size: 14px; }
