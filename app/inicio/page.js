@@ -98,7 +98,7 @@ export default async function Home() {
           </div>
         </div>
         <div className="hero-foto">
-          <img src="/hero.jpg" alt="Caballero con prenda SUMACK" fetchPriority="high" />
+          <img src="/hero-polo.webp" alt="Caballero con polo bicolor SUMACK" fetchPriority="high" width="1366" height="941" />
         </div>
       </section>
 
