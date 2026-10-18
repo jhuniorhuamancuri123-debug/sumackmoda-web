@@ -30,60 +30,25 @@ export function ToastProvider({ children }) {
 function ToastContainer({ toasts }) {
   if (toasts.length === 0) return null;
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '2rem',
-      right: '2rem',
-      zIndex: 999,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.75rem',
-    }}>
+    <div className="toasts" role="status" aria-live="polite">
       {toasts.map(t => <Toast key={t.id} toast={t} />)}
     </div>
   );
 }
 
-function Toast({ toast }) {
-  const colores = {
-    success: { bg: '#1a1a1a', border: '#5C3317', icon: '✓' },
-    error:   { bg: '#1a1a1a', border: '#c0392b', icon: '✕' },
-    warning: { bg: '#1a1a1a', border: '#f39c12', icon: '⚠' },
-    info:    { bg: '#1a1a1a', border: '#3498db', icon: 'i' },
-  };
-  const c = colores[toast.tipo] || colores.success;
+const ICONOS = { success: '✓', error: '✕', warning: '!', info: 'i' };
 
+function Toast({ toast }) {
+  // El texto de éxito ya trae "✓" al inicio: se quita para no repetirlo
+  const mensaje = String(toast.mensaje).replace(/^✓\s*/, '');
   return (
-    <div style={{
-      background: c.bg,
-      borderLeft: `3px solid ${c.border}`,
-      color: '#fafaf8',
-      padding: '1rem 1.25rem',
-      minWidth: '280px',
-      maxWidth: '360px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-      animation: 'slideIn 0.3s ease',
-      fontFamily: 'var(--font-body)',
-      fontSize: '0.9rem',
-      lineHeight: 1.4,
-    }}>
-      <span style={{
-        width: '20px', height: '20px',
-        borderRadius: '50%',
-        border: `1px solid ${c.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.7rem', flexShrink: 0, color: c.border,
-      }}>
-        {c.icon}
-      </span>
-      {toast.mensaje}
+    <div className={`toast ${toast.tipo}`}>
+      <i aria-hidden="true">{ICONOS[toast.tipo] || ICONOS.success}</i>
+      <span>{mensaje}</span>
     </div>
   );
 }
 
 export function useToast() {
   return useContext(ToastContext);
-}
+}

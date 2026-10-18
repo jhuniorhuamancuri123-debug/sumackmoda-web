@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
@@ -53,63 +54,57 @@ export default function BuscadorBtn() {
   return (
     <>
       <button className="icon-btn" aria-label="Buscar" onClick={() => setAbierto(true)}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+          <circle cx="11" cy="11" r="7.5"/>
+          <path d="m20.5 20.5-4-4"/>
         </svg>
       </button>
 
-      {abierto && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:300,backdropFilter:'blur(3px)',display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:'10vh'}}
-          onClick={() => setAbierto(false)}>
-          <div style={{background:'var(--blanco)',width:'100%',maxWidth:'560px',margin:'0 1rem',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}
-            onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex',alignItems:'center',padding:'1.25rem 1.5rem',borderBottom:'1px solid var(--gris-claro)',gap:'1rem'}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gris)" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Buscar por modelo o código..."
-                style={{flex:1,border:'none',outline:'none',fontFamily:'var(--font-body)',fontSize:'1rem',background:'transparent',color:'var(--negro)'}}
-                onKeyDown={e => { if (e.key === 'Escape') setAbierto(false); if (e.key === 'Enter' && resultados.length > 0) irAProducto(resultados[0].cod_modelo); }}
-              />
-              <button onClick={() => setAbierto(false)} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.4rem',color:'var(--gris)',lineHeight:1}}>×</button>
-            </div>
-
-            <div style={{maxHeight:'360px',overflowY:'auto'}}>
-              {buscando && (
-                <p style={{padding:'1.5rem',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--gris)'}}>Buscando...</p>
-              )}
-              {!buscando && query && resultados.length === 0 && (
-                <p style={{padding:'1.5rem',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--gris)'}}>No se encontraron resultados para "{query}"</p>
-              )}
-              {!buscando && resultados.map(r => (
-                <button key={r.cod_modelo} onClick={() => irAProducto(r.cod_modelo)}
-                  style={{width:'100%',padding:'1rem 1.5rem',display:'flex',alignItems:'center',gap:'1rem',background:'none',border:'none',borderBottom:'1px solid var(--gris-claro)',cursor:'pointer',textAlign:'left',transition:'background 0.15s'}}
-                  onMouseEnter={e => e.currentTarget.style.background='var(--crema)'}
-                  onMouseLeave={e => e.currentTarget.style.background='none'}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gris)" strokeWidth="1.5">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                  </svg>
-                  <div>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.9rem',fontWeight:600,color:'var(--negro)',marginBottom:'0.15rem'}}>{r.nombre}</p>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',color:'var(--gris)',letterSpacing:'0.1em'}}>{r.cod_modelo}</p>
-                  </div>
-                  <svg style={{marginLeft:'auto'}} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gris)" strokeWidth="1.5">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
+      <AnimatePresence>
+        {abierto && (
+          <motion.div className="buscador-velo" onClick={() => setAbierto(false)}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+            <motion.div className="buscador" role="dialog" aria-modal="true" aria-label="Buscar modelos"
+              onClick={e => e.stopPropagation()}
+              initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -16, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
+              <div className="buscador-campo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gris-texto)" strokeWidth="1.6">
+                  <circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4-4"/>
+                </svg>
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Busca por modelo o código"
+                  aria-label="Buscar por modelo o código"
+                  onKeyDown={e => { if (e.key === 'Escape') setAbierto(false); if (e.key === 'Enter' && resultados.length > 0) irAProducto(resultados[0].cod_modelo); }}
+                />
+                <button className="icon-btn" aria-label="Cerrar buscador" onClick={() => setAbierto(false)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 5l14 14M19 5L5 19" /></svg>
                 </button>
-              ))}
-              {!query && (
-                <p style={{padding:'1.5rem',textAlign:'center',fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--gris)'}}>Escribe el nombre o código del modelo</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+              </div>
+
+              <div className="buscador-lista">
+                {buscando && <p className="buscador-msg">Buscando…</p>}
+                {!buscando && query && resultados.length === 0 && (
+                  <p className="buscador-msg">No encontramos modelos para “{query}”. Prueba con otra palabra, por ejemplo “neru” o “piqué”.</p>
+                )}
+                {!buscando && resultados.map(r => (
+                  <button key={r.cod_modelo} className="buscador-res" onClick={() => irAProducto(r.cod_modelo)}>
+                    <div>
+                      <p>{r.nombre.toLowerCase()}</p>
+                      <p className="t-meta">Modelo {r.cod_modelo}</p>
+                    </div>
+                    <svg style={{ marginLeft: 'auto' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </button>
+                ))}
+                {!query && <p className="buscador-msg">Escribe el nombre o el código del modelo</p>}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

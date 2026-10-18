@@ -1,11 +1,10 @@
+import Link from 'next/link';
 export default function NotFound() {
   return (
-    <div style={{paddingTop:'120px',textAlign:'center',fontFamily:'var(--font-body)'}}>
-      <h1 style={{fontFamily:'var(--font-display)',fontSize:'3rem',marginBottom:'1rem'}}>404</h1>
-      <p style={{marginBottom:'2rem',color:'var(--gris)'}}>Pagina no encontrada</p>
-      <a href="/" style={{color:'var(--marron)',textDecoration:'none',borderBottom:'1px solid var(--marron)'}}>
-        Volver al inicio
-      </a>
+    <div className="estado-centro">
+      <h1>No encontramos esta página</h1>
+      <p>Puede que el enlace haya cambiado o el modelo ya no esté disponible.</p>
+      <Link href="/catalogo" className="btn btn-solid" style={{ marginTop: '0.5rem' }}>Ver catálogo</Link>
     </div>
   );
 }

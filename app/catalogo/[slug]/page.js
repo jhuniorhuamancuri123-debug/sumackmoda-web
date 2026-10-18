@@ -1,26 +1,21 @@
   'use client';
+import Link from 'next/link';
   import { use, useState, useEffect, useRef, useCallback } from 'react';
   import { supabase } from '../../lib/supabase';
   import { useCarrito } from '../../context/CarritoContext';
   import { useToast } from '../../context/ToastContext';
   import ProductoImg from '../../components/ProductoImg';
+import Logo from '../../components/Logo';
+import Recomendados, { registrarVisto } from '../../components/Recomendados';
+import { IconoWA } from '../../components/SiteFooter';
+import { AnimatePresence, motion } from 'motion/react';
 
   const TALLAS_ORDEN = ['S', 'M', 'L', 'XL', 'XXL'];
   function ImagenConFallback({ src, alt }) {
     const [error, setError] = useState(false);
 
     if (error) {
-      return (
-        <div style={{
-          position: 'relative', zIndex: 1,
-          width: '100%', height: '100%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--font-display)', fontSize: '1.5rem',
-          fontWeight: 900, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em',
-        }}>
-          SUMACK
-        </div>
-      );
+      return <div className="ficha-foto-fallback"><Logo titulo="" /></div>;
     }
 
     return (
@@ -28,16 +23,7 @@
         src={src}
         alt={alt}
         onError={() => setError(true)}
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          maxHeight: '100%',
-          maxWidth: '100%',
-          width: 'auto',
-          height: 'auto',
-          objectFit: 'contain',
-          display: 'block',
-        }}
+        className="ficha-foto-principal"
       />
     );
   }
@@ -79,6 +65,12 @@
     }, []);
 
     useEffect(() => { cargarProducto(); }, [slug]);
+
+    // Guarda el modelo en "Vistos recientemente" (sólo en este navegador)
+    useEffect(() => {
+      if (!nombreModelo || !colores.length) return;
+      registrarVisto({ cod_modelo: codModelo, nombre: nombreModelo, color: colores[0].cod_color });
+    }, [nombreModelo, colores, codModelo]);
 
   useEffect(() => {
       if (!nombreModelo || !colorSeleccionado || tallasInfo.length === 0) return;
@@ -273,7 +265,7 @@
         urlProducto: `${window.location.origin}/catalogo/${codModelo.toLowerCase()}`,
       });
 
-      toast.success(`✓ ${nombreModelo} agregado — revisa tu carrito para confirmar tu pedido`);
+      toast.success(`${nombreModelo.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase())} agregado. Abre tu carrito para confirmar el pedido.`);
       const eventId = `ATC-${codModelo}-${colorSeleccionado}-${tallaSeleccionada}-${Date.now()}`;
       if (typeof window !== 'undefined' && window.fbq) {
         window.fbq('track', 'AddToCart', {
@@ -366,576 +358,252 @@
     }, [irColorSiguiente, irColorAnterior]);
 
     if (loading) return (
-      <div style={{
-        paddingTop: '120px', textAlign: 'center',
-        fontFamily: 'var(--font-body)', minHeight: '60vh',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
-      }}>
-        <div style={{
-          width: '40px', height: '40px',
-          border: '2px solid var(--gris-claro)',
-          borderTop: '2px solid var(--marron)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-        <p style={{ color: 'var(--gris)', fontSize: '0.95rem', letterSpacing: '0.05em' }}>
-          {loadingMsg}
-        </p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="estado-centro" role="status">
+        <div className="cargando-logo"><Logo titulo="" /></div>
+        <p>{loadingMsg}</p>
       </div>
     );
 
     if (noEncontrado) return (
-      <div style={{
-        paddingTop: '120px', textAlign: 'center',
-        fontFamily: 'var(--font-body)', minHeight: '60vh',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: '1rem',
-      }}>
-        <p style={{ fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
-          Producto no disponible
-        </p>
-        <p style={{ color: 'var(--gris)', fontSize: '0.9rem' }}>
-          Este producto no tiene stock en este momento
-        </p>
-        <a href="/catalogo" style={{
-          marginTop: '1rem', fontFamily: 'var(--font-body)',
-          fontSize: '0.8rem', letterSpacing: '0.15em',
-          textTransform: 'uppercase', color: 'var(--marron)',
-          textDecoration: 'none', borderBottom: '1px solid var(--marron)',
-          paddingBottom: '2px',
-        }}>Ver catálogo</a>
+      <div className="estado-centro">
+        <h1>Este modelo no está disponible</h1>
+        <p>Se agotó o ya no está en el catálogo. Mira los modelos que sí tenemos en stock.</p>
+        <Link href="/catalogo" className="btn btn-solid" style={{ marginTop: '0.5rem' }}>Ver catálogo</Link>
       </div>
     );
 
     const precioActual = itemSeleccionado?.precio
       || tallasInfo.find(t => t.disponible)?.precio || 0;
     const hayMultiplesPrecios = [...new Set(tallasInfo.map(t => t.precio))].length > 1;
+    const r2 = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL;
+    const puedeAgregar = !!itemSeleccionado && itemSeleccionado.stock > 0 && !agregando;
+    const textoBoton = agregando ? 'Agregado al carrito'
+      : !colorSeleccionado ? 'Selecciona un color'
+      : !tallaSeleccionada ? 'Selecciona una talla'
+      : itemSeleccionado?.stock <= 0 ? 'Agotado'
+      : `Agregar al carrito  S/ ${Number(precioActual).toFixed(2)}`;
+    const linkWA = `https://wa.me/51968267313?text=Hola%2C%20me%20interesa%20*${encodeURIComponent(nombreModelo)}*`;
+
+    const botonAgregar = (className = '') => (
+      <button
+        onClick={handleAgregar}
+        disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
+        className={`btn btn-solid btn-full ${agregando ? 'btn-agregado' : ''} ${className}`}
+        aria-live="polite"
+      >
+        {agregando && (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+        )}
+        {textoBoton}
+      </button>
+    );
 
     return (
-      <div style={{ paddingTop: '80px', minHeight: '100vh', paddingBottom: isMobile ? '80px' : '0' }}>
+      <div className="ficha">
 
         {/* LIGHTBOX */}
-        {lightboxAbierto && (
-          <div
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)',
-              zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-            onTouchStart={handleLightboxTouchStart}
-            onTouchEnd={handleLightboxTouchEnd}
-          >
-            <button onClick={() => setLightboxAbierto(false)} style={{
-              position: 'absolute', top: '1.25rem', right: '1.25rem',
-              background: 'rgba(255,255,255,0.15)', border: 'none',
-              color: '#fff', width: '40px', height: '40px',
-              borderRadius: '50%', fontSize: '1.3rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', zIndex: 10, backdropFilter: 'blur(4px)',
-            }}>×</button>
-
-            {colores.length > 1 && (
-              <button onClick={irColorAnterior} style={{
-                position: 'absolute', left: '1rem',
-                background: 'rgba(255,255,255,0.15)', border: 'none',
-                color: '#fff', width: '44px', height: '44px',
-                borderRadius: '50%', fontSize: '1.3rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', backdropFilter: 'blur(4px)',
-              }}>‹</button>
-            )}
-
-            <div style={{
-              width: '90vw', maxWidth: '500px',
-              height: '80vh', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              {imgUrl && (
-                <ProductoImg
-                  key={colorSeleccionado}
-                  src={imgUrl}
-                  alt={nombreModelo}
-                  hexColor="rgba(255,255,255,0.05)"
-                />
-              )}
-            </div>
-
-            {colores.length > 1 && (
-              <button onClick={irColorSiguiente} style={{
-                position: 'absolute', right: '1rem',
-                background: 'rgba(255,255,255,0.15)', border: 'none',
-                color: '#fff', width: '44px', height: '44px',
-                borderRadius: '50%', fontSize: '1.3rem',
-                cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', backdropFilter: 'blur(4px)',
-              }}>›</button>
-            )}
-
-            <div style={{
-              position: 'absolute', bottom: '2rem', left: 0, right: 0,
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: '0.75rem',
-            }}>
-              <p style={{
-                fontFamily: 'var(--font-body)', color: '#fff',
-                fontSize: '0.85rem', letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-              }}>
-                {colorActual?.nombre_color}
-              </p>
+        <AnimatePresence>
+          {lightboxAbierto && (
+            <motion.div
+              className="lightbox"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Foto ampliada de ${nombreModelo}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onTouchStart={handleLightboxTouchStart}
+              onTouchEnd={handleLightboxTouchEnd}
+              onClick={(e) => { if (e.target === e.currentTarget) setLightboxAbierto(false); }}
+            >
+              <button className="lightbox-btn" style={{ top: '1.25rem', right: '1.25rem' }} aria-label="Cerrar" onClick={() => setLightboxAbierto(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 5l14 14M19 5L5 19" /></svg>
+              </button>
               {colores.length > 1 && (
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  {colores.map((_, i) => (
-                    <button key={i} onClick={() => setColorIndex(i)} style={{
-                      width: i === colorIndex ? '20px' : '8px',
-                      height: '8px', borderRadius: '4px',
-                      background: i === colorIndex ? '#fff' : 'rgba(255,255,255,0.4)',
-                      border: 'none', cursor: 'pointer',
-                      transition: 'all 0.3s ease', padding: 0,
-                    }} />
+                <button className="lightbox-btn" style={{ left: '1rem' }} aria-label="Color anterior" onClick={irColorAnterior}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 5l-7 7 7 7" /></svg>
+                </button>
+              )}
+              <div className="lightbox-img">
+                {imgUrl && <ProductoImg key={colorSeleccionado} src={imgUrl} alt={nombreModelo} className="" />}
+              </div>
+              {colores.length > 1 && (
+                <button className="lightbox-btn" style={{ right: '1rem' }} aria-label="Color siguiente" onClick={irColorSiguiente}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5l7 7-7 7" /></svg>
+                </button>
+              )}
+              <div className="lightbox-pie">
+                <p>{colorActual?.nombre_color?.toLowerCase()}</p>
+                {colores.length > 1 && (
+                  <div className="lightbox-puntos">
+                    {colores.map((c, i) => (
+                      <button key={c.cod_color} aria-label={c.nombre_color} onClick={() => setColorIndex(i)}
+                        style={{ width: i === colorIndex ? '22px' : '6px', background: i === colorIndex ? '#fff' : 'rgba(255,255,255,0.4)' }} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="wrap">
+          <nav className="ficha-migas" aria-label="Ruta">
+            <Link href="/catalogo">Catálogo</Link> / <span style={{ textTransform: 'capitalize' }}>{nombreModelo.toLowerCase()}</span>
+          </nav>
+
+          <div className="ficha-grid">
+            {/* GALERÍA */}
+            <div className="ficha-galeria">
+              <div
+                className="ficha-foto"
+                onClick={() => setLightboxAbierto(true)}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                {imgUrl && <img src={imgUrl} alt="" aria-hidden="true" className="ficha-foto-fondo" />}
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={colorSeleccionado || 'sin-color'}
+                    style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {imgUrl && <ImagenConFallback src={imgUrl} alt={`${nombreModelo} color ${colorActual?.nombre_color || ''}`} />}
+                  </motion.div>
+                </AnimatePresence>
+
+                {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
+                  <div className="ficha-badge">
+                    {itemSeleccionado.stock === 1 ? 'Última unidad en esta talla' : `Últimas ${itemSeleccionado.stock} en esta talla`}
+                  </div>
+                )}
+
+                {colores.length > 1 && (
+                  <>
+                    <button className="ficha-flecha izq" aria-label="Color anterior" onClick={(e) => { e.stopPropagation(); irColorAnterior(); }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 5l-7 7 7 7" /></svg>
+                    </button>
+                    <button className="ficha-flecha der" aria-label="Color siguiente" onClick={(e) => { e.stopPropagation(); irColorSiguiente(); }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                  </>
+                )}
+                <span className="ficha-zoom">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4M11 8v6M8 11h6" /></svg>
+                  Ampliar
+                </span>
+              </div>
+
+              {colores.length > 1 && (
+                <div className="ficha-miniaturas" aria-label="Colores">
+                  {colores.map((c, i) => (
+                    <button key={c.cod_color} className={`ficha-mini ${i === colorIndex ? 'activa' : ''}`} aria-label={c.nombre_color} onClick={() => setColorIndex(i)}>
+                      <img src={`${r2}/${codModelo}/${c.cod_color}.webp`} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                    </button>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-        )}
 
-        {/* LAYOUT MÓVIL */}
-        {isMobile ? (
-          <div style={{ padding: '1rem 1.25rem 3rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-            {/* 1. TÍTULO */}
-            <div>
-              <p style={{
-                fontFamily: 'var(--font-body)', fontSize: '0.65rem',
-                letterSpacing: '0.2em', textTransform: 'uppercase',
-                color: 'var(--gris)', marginBottom: '0.3rem',
-              }}>{codModelo}</p>
-              <h1 style={{
-                fontFamily: 'var(--font-display)', fontSize: '1.1rem',
-                fontWeight: 700, lineHeight: 1.2, marginBottom: '0.3rem',
-              }}>{nombreModelo}</h1>
-              <p style={{
-                fontFamily: 'var(--font-body)', fontSize: '1rem',
-                fontWeight: 600, color: 'var(--marron)',
-              }}>
-                {hayMultiplesPrecios && !tallaSeleccionada ? 'Desde ' : ''}
-                S/. {Number(precioActual).toFixed(2)}
+            {/* INFORMACIÓN */}
+            <div className="ficha-info">
+              <p className="ficha-codigo">Modelo {codModelo}</p>
+              <h1 className="t-display ficha-nombre">{nombreModelo.toLowerCase()}</h1>
+              <p className="ficha-precio">
+                {hayMultiplesPrecios && !tallaSeleccionada && <small>Desde</small>}
+                S/ {Number(precioActual).toFixed(2)}
               </p>
-              {hayMultiplesPrecios && !tallaSeleccionada && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--gris)', marginTop: '0.2rem' }}>
-                  El precio varía según la talla
+              {hayMultiplesPrecios && (
+                <p className="ficha-precio-nota">
+                  {tallaSeleccionada ? `Precio de la talla ${tallaSeleccionada}. Varía según la talla.` : 'El precio varía según la talla.'}
                 </p>
               )}
-              {descripcion && (
-                <p style={{
-                  fontFamily: 'var(--font-body)', fontSize: '0.82rem',
-                  color: 'var(--gris)', lineHeight: 1.6, marginTop: '0.6rem',
-                }}>{descripcion}</p>
-              )}
-            </div>
+              {descripcion && <p className="ficha-desc">{descripcion}</p>}
 
-            {/* 2. IMAGEN — sin flechas ni puntos */}
-            <div
-              onClick={() => setLightboxAbierto(true)}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                width: '100%',
-                height: '62vw',
-                minHeight: '260px',
-                maxHeight: '380px',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'zoom-in',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {/* FONDO BORROSO */}
-              {imgUrl && (
-                <img
-                  src={imgUrl}
-                  alt=""
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    filter: 'blur(22px) brightness(0.8)',
-                    transform: 'scale(1.15)',
-                    zIndex: 0,
-                  }}
-                />
-              )}
-
-              {/* IMAGEN PRINCIPAL — completa y centrada */}
-              {imgUrl && (
-                <ImagenConFallback
-                  key={colorSeleccionado}
-                  src={imgUrl}
-                  alt={nombreModelo}
-                />
-              )}
-
-              {/* BADGE stock bajo */}
-              {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
-                <div style={{
-                  position: 'absolute', top: '0.75rem', left: '0.75rem',
-                  background: '#c0392b', color: '#fff',
-                  fontFamily: 'var(--font-body)', fontSize: '0.65rem',
-                  letterSpacing: '0.1em', textTransform: 'uppercase',
-                  padding: '0.3rem 0.6rem', zIndex: 2,
-                }}>¡Últimas {itemSeleccionado.stock}!</div>
-              )}
-
-              {/* BOTÓN VER */}
-              <div style={{
-                position: 'absolute', bottom: '0.6rem', right: '0.6rem',
-                background: 'rgba(0,0,0,0.35)', borderRadius: '4px',
-                padding: '0.3rem 0.4rem', color: '#fff', fontSize: '0.7rem',
-                fontFamily: 'var(--font-body)', letterSpacing: '0.05em',
-                backdropFilter: 'blur(4px)', zIndex: 2,
-              }}>🔍 Ver</div>
-            </div>
-
-            {/* 3. COLOR */}
-            <div>
-              <p style={{
-                fontFamily: 'var(--font-body)', fontSize: '0.7rem',
-                letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.6rem',
-              }}>
-                Color: <strong>{colorActual?.nombre_color || ''}</strong>
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
-                {colores.map((c, i) => (
-                  <button key={c.cod_color}
-                    onClick={() => setColorIndex(i)}
-                    style={{
-                      padding: '0.4rem 0.3rem',
-                      border: colorIndex === i ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
-                      background: colorIndex === i ? 'var(--negro)' : 'transparent',
-                      color: colorIndex === i ? 'var(--blanco)' : 'var(--negro)',
-                      fontFamily: 'var(--font-body)', fontSize: '0.68rem',
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      letterSpacing: '0.03em',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      width: '100%',
-                    }}>
-                    {c.nombre_color}
-                  </button>
-                ))}
+              <div className="ficha-bloque">
+                <div className="ficha-bloque-cab">
+                  <span>Color: <strong style={{ textTransform: 'capitalize' }}>{colorActual?.nombre_color?.toLowerCase() || ''}</strong></span>
+                  {colores.length > 1 && <span className="t-meta">{colores.length} colores</span>}
+                </div>
+                <div className="colores-opciones">
+                  {colores.map((c, i) => (
+                    <button key={c.cod_color} className={`color-opcion ${colorIndex === i ? 'sel' : ''}`} aria-pressed={colorIndex === i} onClick={() => setColorIndex(i)}>
+                      {c.nombre_color.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* 4. TALLA */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                  Talla
-                </p>
-                <a href="/guia-de-tallas" style={{
-                  fontFamily: 'var(--font-body)', fontSize: '0.65rem',
-                  color: 'var(--gris)', textDecoration: 'none',
-                  borderBottom: '1px solid var(--gris-claro)',
-                }}>Guía de tallas</a>
-              </div>
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {tallasInfo.map(({ talla, disponible, precio }) => {
-                  const seleccionada = tallaSeleccionada === talla;
-                  return (
+              <div className="ficha-bloque">
+                <div className="ficha-bloque-cab">
+                  <span>Talla{tallaSeleccionada && <>: <strong>{tallaSeleccionada}</strong></>}</span>
+                  <Link href="/guia-de-tallas" className="link-subrayado" style={{ fontWeight: 500 }}>Guía de tallas</Link>
+                </div>
+                <div className="tallas-opciones">
+                  {tallasInfo.map(({ talla, disponible, precio }) => (
                     <button key={talla}
+                      className={`talla-opcion ${tallaSeleccionada === talla ? 'sel' : ''}`}
                       onClick={() => disponible && setTallaSeleccionada(talla)}
                       disabled={!disponible}
-                      title={disponible ? `S/. ${Number(precio).toFixed(2)}` : 'Agotado'}
-                      style={{
-                        minWidth: '44px', height: '44px', padding: '0 0.4rem',
-                        border: seleccionada ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
-                        background: seleccionada ? 'var(--negro)' : !disponible ? '#f5f5f5' : 'transparent',
-                        color: seleccionada ? 'var(--blanco)' : !disponible ? 'var(--gris-claro)' : 'var(--negro)',
-                        fontFamily: 'var(--font-body)', fontSize: '0.82rem',
-                        cursor: disponible ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.2s', position: 'relative',
-                        textDecoration: !disponible ? 'line-through' : 'none',
-                      }}>
+                      aria-pressed={tallaSeleccionada === talla}
+                      aria-label={disponible ? `Talla ${talla}, S/ ${Number(precio).toFixed(2)}` : `Talla ${talla}, agotada`}
+                    >
                       {talla}
-                      {!disponible && (
-                        <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.4rem', color: '#c0392b' }}>✕</span>
-                      )}
+                      {hayMultiplesPrecios && disponible && <small>S/ {Number(precio).toFixed(0)}</small>}
                     </button>
-                  );
-                })}
-              </div>
-              {tallasInfo.length > 0 && tallasInfo.every(t => !t.disponible) && (
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: '#c0392b', marginTop: '0.5rem' }}>
-                  Agotado en este color — elige otro color
-                </p>
-              )}
-            </div>
-
-            {/* 5. BOTÓN AGREGAR — sticky bottom en móvil */}
-            <div style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0,
-              padding: '0.75rem 1.25rem',
-              background: 'var(--blanco)',
-              borderTop: '1px solid var(--gris-claro)',
-              zIndex: 100,
-              boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
-            }}>
-              <button onClick={handleAgregar}
-                disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
-                style={{
-                  width: '100%', padding: '1rem',
-                  background: agregando ? 'var(--marron)' : itemSeleccionado && itemSeleccionado.stock > 0 ? 'var(--negro)' : 'var(--gris-claro)',
-                  color: (itemSeleccionado && itemSeleccionado.stock > 0) || agregando ? 'var(--blanco)' : 'var(--gris)',
-                  fontFamily: 'var(--font-body)', fontSize: '0.85rem',
-                  fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  border: 'none',
-                  cursor: itemSeleccionado && itemSeleccionado.stock > 0 && !agregando ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.3s',
-                }}>
-                {agregando ? '✓ Agregado al carrito'
-                  : !colorSeleccionado ? 'Selecciona un color'
-                  : !tallaSeleccionada ? 'Selecciona una talla'
-                  : itemSeleccionado?.stock <= 0 ? 'Agotado'
-                  : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
-              </button>
-            </div>
-
-            {/* 6. INFO ENVÍOS */}
-            <div style={{
-              padding: '0.85rem 1rem', background: 'var(--crema)',
-              borderLeft: '3px solid var(--marron)',
-              fontFamily: 'var(--font-body)', fontSize: '0.78rem',
-              lineHeight: 1.7, color: 'var(--negro)',
-            }}>
-              <p style={{ fontWeight: 600, marginBottom: '0.2rem' }}>🚚 Información de envíos</p>
-              <p>• <strong>Shalom:</strong> Sin recargo adicional</p>
-              <p>• <strong>Otras agencias / Delivery:</strong> Recargo variable</p>
-              <p style={{ marginTop: '0.4rem', color: 'var(--gris)', fontSize: '0.72rem' }}>
-                El envío se coordina al confirmar tu pedido por WhatsApp
-              </p>
-            </div>
-
-            {/* 7. WHATSAPP */}
-            <a href={`https://wa.me/51968267313?text=Hola%2C%20me%20interesa%20*${encodeURIComponent(nombreModelo)}*`}
-              target="_blank" rel="noopener"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem', padding: '0.85rem',
-                border: '1px solid var(--gris-claro)',
-                fontFamily: 'var(--font-body)', fontSize: '0.82rem',
-                letterSpacing: '0.1em', color: 'var(--gris)',
-                textDecoration: 'none', transition: 'all 0.2s',
-              }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-              </svg>
-              Consultar por WhatsApp
-            </a>
-          </div>
-
-        ) : (
-
-          /* LAYOUT DESKTOP — sin cambios */
-          <div style={{
-            maxWidth: '1100px', margin: '0 auto', padding: '2rem 1.5rem',
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{
-                width: '100%', height: 'calc(100vh - 140px)', maxHeight: '520px',
-                overflow: 'hidden', position: 'relative',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {imgUrl && (
-                  <img
-                    src={imgUrl}
-                    alt=""
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      filter: 'blur(22px) brightness(0.8)',
-                      transform: 'scale(1.15)',
-                      zIndex: 0,
-                    }}
-                  />
-                )}
-                {imgUrl && (
-                  <ImagenConFallback
-                    key={colorSeleccionado}
-                    src={imgUrl}
-                    alt={nombreModelo}
-                  />
-                )}
-                {itemSeleccionado && itemSeleccionado.stock <= 3 && itemSeleccionado.stock > 0 && (
-                  <div style={{
-                    position: 'absolute', top: '1rem', left: '1rem',
-                    background: '#c0392b', color: '#fff',
-                    fontFamily: 'var(--font-body)', fontSize: '0.7rem',
-                    letterSpacing: '0.1em', textTransform: 'uppercase',
-                    padding: '0.4rem 0.75rem', zIndex: 2,
-                  }}>¡Últimas {itemSeleccionado.stock} unidades!</div>
-                )}
-              </div>
-              {descripcion && (
-                <div style={{
-                  padding: '1rem', background: 'var(--crema)',
-                  borderLeft: '3px solid var(--marron)',
-                  fontFamily: 'var(--font-body)', fontSize: '0.85rem',
-                  lineHeight: 1.7, color: 'var(--negro)',
-                }}>{descripcion}</div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingTop: '1rem' }}>
-              <div>
-                <p style={{
-                  fontFamily: 'var(--font-body)', fontSize: '0.75rem',
-                  letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: 'var(--gris)', marginBottom: '0.5rem',
-                }}>{codModelo}</p>
-                <h1 style={{
-                  fontFamily: 'var(--font-display)', fontSize: '1.8rem',
-                  fontWeight: 700, lineHeight: 1.2, marginBottom: '0.75rem',
-                }}>{nombreModelo}</h1>
-                <p style={{
-                  fontFamily: 'var(--font-body)', fontSize: '1.4rem',
-                  fontWeight: 600, color: 'var(--marron)',
-                }}>
-                  {hayMultiplesPrecios && !tallaSeleccionada ? 'Desde ' : ''}
-                  S/. {Number(precioActual).toFixed(2)}
-                </p>
-                {hayMultiplesPrecios && !tallaSeleccionada && (
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', color: 'var(--gris)', marginTop: '0.25rem' }}>
-                    El precio varía según la talla
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <p style={{
-                  fontFamily: 'var(--font-body)', fontSize: '0.75rem',
-                  letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '0.75rem',
-                }}>Color: <strong>{colorActual?.nombre_color || ''}</strong></p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
-                  {colores.map((c, i) => (
-                    <button key={c.cod_color} onClick={() => setColorIndex(i)}
-                      style={{
-                        padding: '0.4rem 0.3rem',
-                        border: colorIndex === i ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
-                        background: colorIndex === i ? 'var(--negro)' : 'transparent',
-                        color: colorIndex === i ? 'var(--blanco)' : 'var(--negro)',
-                        fontFamily: 'var(--font-body)', fontSize: '0.72rem',
-                        cursor: 'pointer', transition: 'all 0.2s',
-                        letterSpacing: '0.03em',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        width: '100%',
-                      }}>{c.nombre_color}</button>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Talla</p>
-                  <a href="/guia-de-tallas" style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--gris)', textDecoration: 'none', borderBottom: '1px solid var(--gris-claro)' }}>Guía de tallas</a>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {tallasInfo.map(({ talla, disponible, precio }) => {
-                    const seleccionada = tallaSeleccionada === talla;
-                    return (
-                      <button key={talla}
-                        onClick={() => disponible && setTallaSeleccionada(talla)}
-                        disabled={!disponible}
-                        title={disponible ? `S/. ${Number(precio).toFixed(2)}` : 'Agotado'}
-                        style={{
-                          minWidth: '48px', height: '48px', padding: '0 0.5rem',
-                          border: seleccionada ? '2px solid var(--negro)' : '1px solid var(--gris-claro)',
-                          background: seleccionada ? 'var(--negro)' : !disponible ? '#f5f5f5' : 'transparent',
-                          color: seleccionada ? 'var(--blanco)' : !disponible ? 'var(--gris-claro)' : 'var(--negro)',
-                          fontFamily: 'var(--font-body)', fontSize: '0.85rem',
-                          cursor: disponible ? 'pointer' : 'not-allowed',
-                          transition: 'all 0.2s', position: 'relative',
-                          textDecoration: !disponible ? 'line-through' : 'none',
-                        }}>
-                        {talla}
-                        {!disponible && (
-                          <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '0.45rem', color: '#c0392b' }}>✕</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
                 {tallasInfo.length > 0 && tallasInfo.every(t => !t.disponible) && (
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', color: '#c0392b', marginTop: '0.5rem' }}>
-                    Agotado en este color — elige otro color
-                  </p>
+                  <p className="ficha-agotado">Agotado en este color. Elige otro color.</p>
                 )}
               </div>
 
-              <button onClick={handleAgregar}
-                disabled={!itemSeleccionado || itemSeleccionado?.stock <= 0 || agregando}
-                style={{
-                  width: '100%', padding: '1rem',
-                  background: agregando ? 'var(--marron)' : itemSeleccionado && itemSeleccionado.stock > 0 ? 'var(--negro)' : 'var(--gris-claro)',
-                  color: (itemSeleccionado && itemSeleccionado.stock > 0) || agregando ? 'var(--blanco)' : 'var(--gris)',
-                  fontFamily: 'var(--font-body)', fontSize: '0.85rem',
-                  fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-                  border: 'none',
-                  cursor: itemSeleccionado && itemSeleccionado.stock > 0 && !agregando ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.3s',
-                }}>
-                {agregando ? '✓ Agregado al carrito'
-                  : !colorSeleccionado ? 'Selecciona un color'
-                  : !tallaSeleccionada ? 'Selecciona una talla'
-                  : itemSeleccionado?.stock <= 0 ? 'Agotado'
-                  : `Agregar al carrito — S/. ${Number(precioActual).toFixed(2)}`}
-              </button>
-
-              <div style={{
-                padding: '1rem', background: 'var(--crema)',
-                borderLeft: '3px solid var(--marron)',
-                fontFamily: 'var(--font-body)', fontSize: '0.82rem',
-                lineHeight: 1.7, color: 'var(--negro)',
-              }}>
-                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>🚚 Información de envíos</p>
-                <p>• <strong>Shalom:</strong> Sin recargo adicional</p>
-                <p>• <strong>Otras agencias / Delivery:</strong> Recargo variable</p>
-                <p style={{ marginTop: '0.5rem', color: 'var(--gris)', fontSize: '0.78rem' }}>
-                  El envío se coordina al confirmar tu pedido por WhatsApp
-                </p>
+              <div className="ficha-acciones">
+                {botonAgregar('btn-agregar-desk')}
+                <a href={linkWA} target="_blank" rel="noopener" className="btn btn-linea btn-full">
+                  <IconoWA /> Consultar por WhatsApp
+                </a>
               </div>
 
-              <a href={`https://wa.me/51968267313?text=Hola%2C%20me%20interesa%20*${encodeURIComponent(nombreModelo)}*`}
-                target="_blank" rel="noopener"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '0.5rem', padding: '0.85rem',
-                  border: '1px solid var(--gris-claro)',
-                  fontFamily: 'var(--font-body)', fontSize: '0.82rem',
-                  letterSpacing: '0.1em', color: 'var(--gris)',
-                  textDecoration: 'none', transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#25D366'; e.currentTarget.style.color = '#25D366'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gris-claro)'; e.currentTarget.style.color = 'var(--gris)'; }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-                </svg>
-                Consultar por WhatsApp
-              </a>
+              <div className="ficha-detalles" style={{ marginTop: '2rem' }}>
+                <details open>
+                  <summary>Envíos</summary>
+                  <div className="det-cuerpo">
+                    <p><strong>Shalom:</strong> sin recargo adicional.</p>
+                    <p><strong>Olva, otras agencias o delivery en Lima:</strong> recargo variable según destino.</p>
+                    <p className="t-meta">El envío se coordina al confirmar tu pedido por WhatsApp.</p>
+                  </div>
+                </details>
+                <details>
+                  <summary>Cambios</summary>
+                  <div className="det-cuerpo">
+                    <p>Aceptamos cambios dentro de los 4 días calendario desde que recibes tu pedido, con la prenda sin uso y con etiquetas.</p>
+                    <p><Link href="/politica-devoluciones" className="link-subrayado" style={{ fontWeight: 500 }}>Leer la política completa</Link></p>
+                  </div>
+                </details>
+                <details>
+                  <summary>Cómo comprar</summary>
+                  <div className="det-cuerpo">
+                    <p>1. Elige color y talla y agrega al carrito.</p>
+                    <p>2. Escribe tu nombre y confirma el pedido.</p>
+                    <p>3. Se abre WhatsApp con tu pedido listo; coordinamos pago y envío contigo.</p>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
-        )}
+        </div>
 
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <Recomendados excluir={codModelo} />
+
+        {/* BARRA FIJA DE COMPRA (móvil) */}
+        <div className="barra-compra">
+          {botonAgregar()}
+        </div>
       </div>
     );
   }

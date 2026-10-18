@@ -1,8 +1,8 @@
 'use client';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import Link from 'next/link';
-import ProductoImg from '../components/ProductoImg';
+import ProductoCard from '../components/ProductoCard';
 
 const TALLAS = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -61,6 +61,7 @@ export default function CatalogoPage() {
     ...p,
     foto_principal: fotosMap[p.cod_modelo],
     totalColores: coloresPorModelo[p.cod_modelo]?.size || 1,
+    colorAlt: [...(coloresPorModelo[p.cod_modelo] || [])].find(c => c !== fotosMap[p.cod_modelo]) || null,
     orden: fotosMap[p.cod_modelo + '_orden'] ?? 999,
   }))
   .sort((a, b) => a.orden - b.orden);
@@ -71,69 +72,60 @@ export default function CatalogoPage() {
 
   return (
     <div className="catalogo-page">
-      <div className="catalogo-header">
-        <h1 className="catalogo-titulo">Catálogo</h1>
-        <p className="catalogo-subtitulo">
-          {loading ? 'Cargando...' : `${productos.length} modelos disponibles`}
+      <header className="wrap catalogo-cabecera">
+        <div>
+          <h1 className="t-display catalogo-titulo">Catálogo</h1>
+          <p className="catalogo-intro">Polos de caballero confeccionados en nuestro taller de Gamarra.</p>
+        </div>
+        <p className="catalogo-conteo" aria-live="polite">
+          {loading ? 'Cargando modelos…' : `${productos.length} ${productos.length === 1 ? 'modelo disponible' : 'modelos disponibles'}${tallaFiltro ? ` en talla ${tallaFiltro}` : ''}`}
         </p>
-      </div>
+      </header>
 
-      {/* Aviso precios variables */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem 1rem' }}>
-        <div style={{
-          background: 'var(--crema)',
-          borderLeft: '4px solid var(--marron)',
-          padding: '1rem 1.25rem',
-          fontFamily: 'var(--font-body)',
-          fontSize: '1rem',
-          fontWeight: 600,
-          color: 'var(--negro)',
-          lineHeight: 1.6,
-        }}>
-          💡 Los precios varían según la talla — selecciona tu talla para ver disponibilidad y precio exacto.
+      <div className="catalogo-barra">
+        <div className="wrap catalogo-barra-inner">
+          <div className="tallas-filtro" role="group" aria-label="Filtrar por talla">
+            <span className="tallas-filtro-label">Tu talla</span>
+            {TALLAS.map(t => (
+              <button
+                key={t}
+                className={`filtro-btn ${tallaFiltro === t ? 'active' : ''}`}
+                aria-pressed={tallaFiltro === t}
+                onClick={() => setTallaFiltro(tallaFiltro === t ? null : t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <p className="catalogo-aviso">
+            {tallaFiltro
+              ? <>Precios de la talla <strong>{tallaFiltro}</strong>. <Link href="/guia-de-tallas" className="link-subrayado">Ver medidas</Link></>
+              : 'El precio varía según la talla. Elige la tuya para ver el precio exacto.'}
+          </p>
         </div>
       </div>
 
-      {/* Filtros por talla */}
-      <div className="catalogo-filtros">
-        {TALLAS.map(t => (
-          <button
-            key={t}
-            className={`filtro-btn ${tallaFiltro === t ? 'active' : ''}`}
-            onClick={() => setTallaFiltro(tallaFiltro === t ? null : t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {/* Grilla */}
-      <div className="catalogo-grid-wrap">
+      <div className="wrap catalogo-grid-wrap">
         {loading ? (
           <div className="productos-grid">
             {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : productos.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: '4rem',
-            fontFamily: 'var(--font-body)', color: 'var(--gris)',
-          }}>
-            <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
-              No hay modelos disponibles en talla {tallaFiltro}
-            </p>
-            <button onClick={() => setTallaFiltro(null)} style={{
-              fontFamily: 'var(--font-body)', fontSize: '0.8rem',
-              letterSpacing: '0.15em', textTransform: 'uppercase',
-              color: 'var(--marron)', background: 'none',
-              border: 'none', borderBottom: '1px solid var(--marron)',
-              cursor: 'pointer', paddingBottom: '2px',
-            }}>
-              Ver todos los modelos
-            </button>
+          <div className="vacio">
+            <p>No hay modelos disponibles en talla {tallaFiltro} por ahora.</p>
+            <button className="btn btn-linea" onClick={() => setTallaFiltro(null)}>Ver todas las tallas</button>
           </div>
         ) : (
           <div className="productos-grid">
-            {productos.map((p, i) => <ProductoCard key={p.id} producto={p} priority={i === 0} />)}
+            {productos.map((p, i) => (
+              <ProductoCard
+                key={p.id}
+                producto={p}
+                priority={i < 2}
+                indice={i}
+                etiquetaPrecio={tallaFiltro ? `Talla ${tallaFiltro}` : 'Desde'}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -141,33 +133,12 @@ export default function CatalogoPage() {
   );
 }
 
-function ProductoCard({ producto, priority = false }) {
-  const { cod_modelo, foto_principal, nombre, precio, stock } = producto;
-  const nombreModelo = nombre.split(' / ')[0]?.trim() || nombre;
-  const imgUrl = `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${cod_modelo}/${foto_principal}.webp`;
-  const agotado = stock === 0;
-
-  return (
-    <Link href={`/catalogo/${cod_modelo}`} className="producto-card">
-      <div className="producto-img-wrap">
-        <ProductoImg src={imgUrl} alt={nombreModelo} hexColor="#e8e4dc" priority={priority} />
-        {agotado && <span className="producto-badge agotado">Agotado</span>}
-      </div>
-      <p className="producto-nombre">{nombreModelo}</p>
-      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: 'var(--gris)', marginBottom: '0.2rem' }}>
-        {producto.totalColores} {producto.totalColores === 1 ? 'color' : 'colores'} disponibles
-      </p>
-      <p className="producto-precio">Desde S/. {Number(precio).toFixed(2)}</p>
-    </Link>
-  );
-}
-
 function SkeletonCard() {
   return (
-    <div className="producto-card">
-      <div className="producto-img-wrap" style={{ background: '#e8e4dc', animation: 'pulse 1.5s infinite' }} />
-      <div style={{ height: '1rem', background: '#e8e4dc', marginBottom: '0.4rem', borderRadius: '2px' }} />
-      <div style={{ height: '0.8rem', background: '#e8e4dc', width: '60%', borderRadius: '2px' }} />
+    <div>
+      <div className="producto-img-wrap skeleton" />
+      <div className="skeleton" style={{ height: '0.95rem', marginBottom: '0.45rem', width: '80%' }} />
+      <div className="skeleton" style={{ height: '0.8rem', width: '45%' }} />
     </div>
   );
 }

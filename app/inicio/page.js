@@ -1,17 +1,22 @@
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
-import ProductoImg from '../components/ProductoImg';
+import ProductoCard from '../components/ProductoCard';
+import Logo from '../components/Logo';
+import Proceso from '../components/Proceso';
+import { IconoWA } from '../components/SiteFooter';
+import { RESENAS } from '../data/resenas';
+import { GARANTIAS, WHATSAPP } from '../data/marca';
 
-  export const metadata = {
+export const metadata = {
+  title: 'Inicio | SUMACK - Moda Masculina Premium',
+  description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
+  openGraph: {
     title: 'Inicio | SUMACK - Moda Masculina Premium',
-    description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
-    openGraph: {
-      title: 'Inicio | SUMACK - Moda Masculina Premium',
-      description: 'Polos masculinos premium hechos en Perú.',
-      url: 'https://sumackmoda.com/inicio',
-      images: [{ url: 'https://sumackmoda.com/og-image.jpg' }],
-    },
-  };
+    description: 'Polos masculinos premium hechos en Perú.',
+    url: 'https://sumackmoda.com/inicio',
+    images: [{ url: 'https://sumackmoda.com/og-image.jpg' }],
+  },
+};
 
 export const revalidate = 1800;
 
@@ -35,6 +40,12 @@ async function getProductosDestacados() {
     if (productosUnicos.length >= 4) break;
   }
 
+  const coloresPorModelo = {};
+  for (const p of data) {
+    if (!coloresPorModelo[p.cod_modelo]) coloresPorModelo[p.cod_modelo] = new Set();
+    coloresPorModelo[p.cod_modelo].add(p.cod_color);
+  }
+
   const codModelos = productosUnicos.map(p => p.cod_modelo);
   const { data: fotosData } = await supabase
     .from('modelos')
@@ -49,70 +60,137 @@ async function getProductosDestacados() {
     .map(p => ({
       ...p,
       foto_principal: fotosMap[p.cod_modelo],
+      totalColores: 0,
+      colorAlt: [...(coloresPorModelo[p.cod_modelo] || [])].find(c => c !== fotosMap[p.cod_modelo]) || null,
     }));
 }
 
+const RAZONES = [
+  { t: 'Fabricantes, no revendedores', d: 'Vendemos lo que producimos. Entre nuestro taller y tú no hay intermediarios.' },
+  { t: 'Medidas publicadas', d: 'Largo, pecho y manga de cada talla en la guía. Eliges con datos, no a ojo.' },
+  { t: 'Envíos a todo el Perú', d: 'Por Shalom sin recargo adicional. Olva, otras agencias o delivery en Lima según tu destino.' },
+  { t: 'Te atiende una persona', d: 'Por WhatsApp, de lunes a sábado de 9:00 a 19:00. Resolvemos tallas, colores y envíos.' },
+  { t: 'Cambios dentro de 4 días', d: 'Si la talla no fue la correcta, la cambiamos según nuestra política de cambios.' },
+  { t: 'Dos tiendas en Gamarra', d: 'Si estás en Lima, puedes ver las prendas en persona antes de decidir.' },
+];
+
 export default async function Home() {
   const destacados = await getProductosDestacados();
-  const r2Url = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL;
+  const cinta = [...GARANTIAS, ...GARANTIAS];
 
   return (
     <>
-      {/* 1. HERO */}
-      <section className="hero">
-        <img src="/hero.jpg" alt="SUMACK" className="hero-img" fetchpriority="high" />
-        <div className="hero-content">
-          <p className="hero-eyebrow">Nueva coleccion</p>
-          <h1 className="hero-title">El arte de vestir bien</h1>
-          <p className="hero-subtitle">Prendas premium para el caballero que define su propio estilo.</p>
-          <Link href="/catalogo" className="btn-primary">Ver coleccion</Link>
+      {/* HERO: el logo se arma pieza por pieza y una costura lo subraya */}
+      <section className="hero sobre-oscuro">
+        <div className="hero-texto">
+          <h1 className="hero-logo">
+            <Logo animado titulo="SUMACK" />
+          </h1>
+          <div className="hero-costura" aria-hidden="true" />
+          <p className="hero-frase">Polos de caballero, del corte a la última costura en Gamarra.</p>
+          <p className="hero-sub">
+            Diseñamos y confeccionamos nuestros propios modelos. Eliges color y talla,
+            confirmas tu pedido por WhatsApp y lo enviamos a todo el Perú.
+          </p>
+          <div className="hero-ctas">
+            <Link href="/catalogo" className="btn btn-claro">Ver catálogo</Link>
+            <Link href="/guia-de-tallas" className="btn btn-linea">Encontrar mi talla</Link>
+          </div>
+        </div>
+        <div className="hero-foto">
+          <img src="/hero.jpg" alt="Caballero con prenda SUMACK" fetchPriority="high" />
         </div>
       </section>
 
-      {/* 2. PRODUCTOS */}
-      <section className="seccion">
-        <div className="seccion-header">
-          <h2 className="seccion-titulo">Lo mas vendido</h2>
-          <Link href="/catalogo" className="seccion-link">Ver todo</Link>
+      {/* CINTA DE GARANTÍAS */}
+      <div className="cinta" aria-label="Garantías SUMACK">
+        <ul className="sr-only">{GARANTIAS.map(g => <li key={g}>{g}</li>)}</ul>
+        <div className="cinta-track" aria-hidden="true">
+          {cinta.map((g, i) => <span key={i} className="cinta-item">{g}</span>)}
         </div>
-        <div className="productos-grid">
-          {destacados.map((p) => (
-            <Link key={p.id} href={"/catalogo/" + p.cod_modelo} className="producto-card">
-              <div className="producto-img-wrap">
-                <ProductoImg
-                  src={`${r2Url}/${p.cod_modelo}/${p.foto_principal}.webp`}
-                  alt={p.nombre}
-                  hexColor="#e8e4dc"
-                />
-                {p.stock === 0 && <span className="producto-badge agotado">Agotado</span>}
+      </div>
+
+      {/* SELECCIÓN */}
+      {destacados.length > 0 && (
+        <section className="seccion">
+          <div className="wrap">
+            <div className="seccion-header">
+              <div>
+                <h2 className="t-titulo">Una selección del catálogo</h2>
+                <p>Tallas S a XXL. El precio final depende de la talla que elijas.</p>
               </div>
-              <p className="producto-nombre">{p.nombre.split(" / ")[0]}</p>
-              <p className="producto-precio">S/. {Number(p.precio).toFixed(2)}</p>
-            </Link>
-          ))}
+              <Link href="/catalogo" className="link-subrayado">Ver todos los modelos</Link>
+            </div>
+            <div className="productos-grid">
+              {destacados.map((p, i) => <ProductoCard key={p.id} producto={p} indice={i} />)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* PROCESO: secuencia real del taller */}
+      <section className="seccion seccion-oscura">
+        <div className="wrap">
+          <div className="seccion-header">
+            <div>
+              <h2 className="t-titulo">Del molde a tu armario</h2>
+              <p>Cada polo SUMACK pasa por las mismas manos y el mismo control, en el mismo taller.</p>
+            </div>
+          </div>
+          <Proceso />
         </div>
       </section>
 
-      {/* 3. FRASE NEGRA */}
-      <section className="seccion-frase">
-        <p className="frase-principal">SUMACK nacio de la conviccion de que vestir bien es una forma de respeto propio.</p>
-        <span className="frase-sub">Lima, Peru - Moda Masculina Premium</span>
-      </section>
-
-      {/* 4. BANNER */}
-      <section className="banner-medio">
-        <img src="/hero.jpg" alt="Elegancia atemporal" className="banner-img" />
-        <div className="banner-overlay" />
-        <div className="banner-content">
-          <h2 className="banner-titulo">Elegancia atemporal</h2>
-          <Link href="/catalogo" className="btn-primary">Comprar ahora</Link>
+      {/* RAZONES */}
+      <section className="seccion">
+        <div className="wrap">
+          <div className="seccion-header">
+            <div>
+              <h2 className="t-titulo">Por qué comprar en SUMACK</h2>
+            </div>
+          </div>
+          <div className="razones">
+            {RAZONES.map(r => (
+              <div key={r.t} className="razon">
+                <h3>{r.t}</h3>
+                <p>{r.d}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 5. QUOTE FINAL */}
-      <section className="seccion-quote">
-        <p className="quote-texto">Vestir bien no es vanidad. Es presencia, criterio y respeto propio.</p>
-        <Link href="/catalogo" className="btn-outline">Explorar coleccion</Link>
+      {/* RESEÑAS: sólo si hay reseñas reales cargadas en app/data/resenas.js */}
+      {RESENAS.length > 0 && (
+        <section className="seccion seccion-piedra">
+          <div className="wrap">
+            <div className="seccion-header"><div><h2 className="t-titulo">Lo que dicen nuestros clientes</h2></div></div>
+            <div className="resenas">
+              {RESENAS.map((r, i) => (
+                <figure key={i} className="resena">
+                  <blockquote>“{r.texto}”</blockquote>
+                  <figcaption><strong>{r.autor}</strong>{r.origen ? `, ${r.origen}` : ''}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* CIERRE */}
+      <section className="seccion seccion-piedra">
+        <div className="wrap cierre">
+          <h2 className="t-display">¿No sabes tu talla? Te ayudamos a elegirla.</h2>
+          <div className="cierre-acciones">
+            <p className="t-serif" style={{ fontSize: '1.15rem', maxWidth: '38ch' }}>
+              Escríbenos tu altura y la talla que usas normalmente. Te respondemos por WhatsApp.
+            </p>
+            <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola, quiero ayuda para elegir mi talla')}`} target="_blank" rel="noopener" className="btn btn-wa">
+              <IconoWA /> Consultar mi talla
+            </a>
+            <Link href="/guia-de-tallas" className="link-subrayado">Ver la guía de tallas</Link>
+          </div>
+        </div>
       </section>
     </>
   );
