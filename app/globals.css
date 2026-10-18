@@ -10,6 +10,7 @@
   /* Paleta */
   --carbon: #17181a;
   --carbon-2: #232427;
+  --cafe: #2a1d14;        /* marrón café oscuro del hero */
   --piedra: #e6e4df;
   --papel: #f6f5f2;
   --tabaco: #6e4b2f;
@@ -195,7 +196,7 @@ p { text-wrap: pretty; }
   margin-top: var(--nav-h);
   min-height: calc(100svh - var(--nav-h));
   display: grid; grid-template-columns: 7fr 5fr;
-  background: var(--carbon); color: var(--papel);
+  background: var(--cafe); color: var(--papel);
 }
 .hero-texto {
   display: flex; flex-direction: column; justify-content: flex-end;
