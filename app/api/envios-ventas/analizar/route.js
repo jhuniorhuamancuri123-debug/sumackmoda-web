@@ -1,6 +1,7 @@
 // POST /api/envios-ventas/analizar
-// Recibe el mensaje que pegó la vendedora y devuelve los datos de envío
-// extraídos por Claude + la agencia Shalom más parecida de la base de datos.
+// Recibe el texto que pegó la vendedora (uno o VARIOS clientes) y devuelve
+// { ok, clientes: [ {texto, datos, agencia, alternativas, confianza, advertencias} ] }
+// extraídos por Claude + la agencia Shalom más parecida de la base (nombre de la plantilla).
 //
 // Variables de entorno (Vercel → Settings → Environment Variables, y .env.local):
 //   ANTHROPIC_API_KEY  = clave de la API de Claude (console.anthropic.com)   ← OBLIGATORIA
@@ -26,15 +27,13 @@ const LISTADO_AGENCIAS =
     [a.id, a.n.replace(/\s+/g, " "), a.w || "", a.dep, a.prov, a.dist, (a.d || "").slice(0, 90)].join(" | ")
   ).join("\n");
 
-function soloDigitos(s) {
-  return String(s || "").replace(/\D/g, "");
+// El número se deja como lo escribió el cliente (celular, fijo o extranjero):
+// solo se quitan espacios, puntos, guiones y paréntesis.
+function limpiarTelefono(t) {
+  return String(t || "").replace(/[^\d+]/g, "");
 }
 
-function limpiarTelefono(t) {
-  let d = soloDigitos(t);
-  if (d.length === 11 && d.startsWith("51")) d = d.slice(2);
-  return d;
-}
+const MAX_CLIENTES = 40;
 
 export async function POST(req) {
   if (!pinValido(req)) {
@@ -53,7 +52,7 @@ export async function POST(req) {
   if (texto.length < 5) {
     return NextResponse.json({ ok: false, msg: "Pega el mensaje del cliente primero." }, { status: 400 });
   }
-  if (texto.length > 6000) texto = texto.slice(0, 6000);
+  if (texto.length > 20000) texto = texto.slice(0, 20000);
 
   let r;
   try {
@@ -66,7 +65,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || MODELO_DEFECTO,
-        max_tokens: 2048,
+        max_tokens: 16000,
         // OJO: los modelos 5.5 (Haiku/Sonnet) NO aceptan temperature/top_p/top_k
         // distintos al valor por defecto → error 400. No agregarlos.
         system: [
@@ -76,7 +75,7 @@ export async function POST(req) {
         tools: [HERRAMIENTA_IA],
         tool_choice: { type: "tool", name: HERRAMIENTA_IA.name },
         messages: [
-          { role: "user", content: "MENSAJE DEL CLIENTE:\n\"\"\"\n" + texto + "\n\"\"\"" },
+          { role: "user", content: "TEXTO PEGADO POR LA VENDEDORA (uno o varios clientes):\n\"\"\"\n" + texto + "\n\"\"\"" },
         ],
       }),
     });
@@ -96,12 +95,18 @@ export async function POST(req) {
 
   const data = await r.json();
   const uso = data?.content?.find((c) => c.type === "tool_use");
-  const x = uso?.input;
-  if (!x) {
-    return NextResponse.json({ ok: false, msg: "La IA no devolvió datos. Intenta de nuevo." }, { status: 502 });
+  let lista = uso?.input?.clientes;
+  if (!Array.isArray(lista) && uso?.input?.nombre_completo !== undefined) lista = [uso.input]; // por si acaso
+  if (!Array.isArray(lista) || !lista.length) {
+    return NextResponse.json({ ok: false, msg: "La IA no encontró datos de clientes en el texto." }, { status: 422 });
   }
+  if (lista.length > MAX_CLIENTES) lista = lista.slice(0, MAX_CLIENTES);
 
-  // ── Validación y limpieza del lado del servidor ─────────────────────────────
+  return NextResponse.json({ ok: true, clientes: lista.map(procesarCliente) });
+}
+
+// ── Validación y limpieza del lado del servidor (un cliente) ──────────────────
+function procesarCliente(x) {
   const advertencias = [];
   const documento = String(x.documento || "").replace(/[\s.\-]/g, "").toUpperCase();
   const telefono = limpiarTelefono(x.telefono);
@@ -111,7 +116,6 @@ export async function POST(req) {
   if (!documento) advertencias.push("No se encontró DNI/CE.");
   else if (x.tipo_documento === "DNI" && documento.length !== 8) advertencias.push("El DNI no tiene 8 dígitos.");
   if (!telefono) advertencias.push("No se encontró celular.");
-  else if (!/^9\d{8}$/.test(telefono)) advertencias.push("El celular no tiene 9 dígitos o no empieza con 9.");
 
   let agencia = null;
   let alternativas = [];
@@ -119,26 +123,30 @@ export async function POST(req) {
 
   if (esShalom) {
     agencia = agenciaPorId(x.agencia_id);
-    alternativas = (x.agencias_alternativas || [])
-      .map(agenciaPorId)
-      .filter((a) => a && (!agencia || a.id !== agencia.id));
-    // Respaldo: si la IA no eligió, buscamos por texto en la base de datos
-    if (!agencia && x.texto_destino) {
-      const cand = buscarAgencias(x.texto_destino, 5);
-      if (cand.length) {
+    alternativas = (x.agencias_alternativas || []).map(agenciaPorId).filter(Boolean);
+    // Respaldo / más opciones: buscar en la base por lo que escribió el cliente
+    // (nombre, calle, distrito, provincia o departamento).
+    if (x.texto_destino && (!agencia || confianza !== "alta")) {
+      const cand = buscarAgencias(x.texto_destino, 8);
+      if (!agencia && cand.length) {
         agencia = cand[0];
         confianza = "baja";
-        alternativas = cand.slice(1);
+      }
+      for (const c of cand) {
+        if (alternativas.length >= 6) break;
+        if (!alternativas.some((a) => a.id === c.id)) alternativas.push(c);
       }
     }
+    alternativas = alternativas.filter((a) => !agencia || a.id !== agencia.id).slice(0, 6);
     if (!agencia) advertencias.push("No se pudo identificar la agencia: elígela manualmente.");
-    else if (confianza !== "alta") advertencias.push("Verifica la agencia elegida.");
+    else if (confianza === "baja") advertencias.push("Confianza baja: confirma la agencia o elige otra opción.");
+    else if (confianza === "media") advertencias.push("Verifica la agencia elegida.");
   }
 
   const monto = typeof x.monto === "number" && x.monto > 0 ? x.monto : null;
 
-  return NextResponse.json({
-    ok: true,
+  return {
+    texto: String(x.texto_cliente || "").trim(),
     datos: {
       nombre: String(x.nombre_completo || "").trim().toUpperCase(),
       tipoDoc: x.tipo_documento || "",
@@ -151,8 +159,8 @@ export async function POST(req) {
       observaciones: x.observaciones || "",
     },
     agencia,
-    alternativas: alternativas.slice(0, 4),
+    alternativas,
     confianza,
     advertencias,
-  });
+  };
 }

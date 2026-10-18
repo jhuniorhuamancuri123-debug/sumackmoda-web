@@ -23,6 +23,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAQDMZFD-j64wula9ET
 
 const TIENDAS = { "6to": "6TO PISO GUIZADO", "9no": "9NO PISO GUIZADO" };
 const ANALISIS_EN_PARALELO = 4;
+const MAX_CLIENTES = 40;       // máximo de clientes por grupo (registro + impresión)
+const MAX_GRUPOS_GUARDADOS = 10; // últimos grupos guardados en el celular para reimprimir
 
 let _k = 0;
 function nuevoCliente() {
@@ -32,7 +34,33 @@ function nuevoCliente() {
     nombre: "", dni: "", telefono: "", empresa: "SHALOM", agencia: null, agenciaOtra: "", monto: "",
     textoDestino: "", observaciones: "", alternativas: [], confianza: "", advertencias: [],
     buscando: false, q: "", registro: null,
+    agenciaConfirmada: false,      // obligatorio cuando la IA tiene confianza baja
+    duplicados: [], dupConfirmado: false,
   };
+}
+
+// Convierte un resultado de la IA en los campos de una tarjeta
+function datosDesdeIA(res) {
+  const d = res.datos;
+  return {
+    estado: "listo", msg: "",
+    nombre: d.nombre, dni: d.dni, telefono: d.telefono,
+    empresa: d.empresa || "SHALOM",
+    agencia: res.agencia ? agenciaPorId(res.agencia.id) || res.agencia : null,
+    agenciaOtra: d.agenciaOtra || "",
+    monto: d.monto ? String(d.monto) : "",
+    textoDestino: d.textoDestino, observaciones: d.observaciones,
+    alternativas: res.alternativas || [], confianza: res.confianza || "",
+    advertencias: res.advertencias || [],
+    agenciaConfirmada: false, duplicados: [], dupConfirmado: false,
+  };
+}
+
+function leerGrupos() {
+  try { return JSON.parse(localStorage.getItem("ev_grupos") || "[]"); } catch { return []; }
+}
+function guardarGrupos(g) {
+  try { localStorage.setItem("ev_grupos", JSON.stringify(g.slice(0, MAX_GRUPOS_GUARDADOS))); } catch {}
 }
 
 function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } }
@@ -48,14 +76,17 @@ function fechaHora() {
 }
 
 // Datos obligatorios. Devuelve la lista de lo que falta (vacía = completo).
-function faltantes(c) {
+// dupLote = número de otro cliente de esta misma lista con el mismo DNI (o 0)
+function faltantes(c, dupLote = 0) {
   const f = [];
   const shalom = c.empresa === "SHALOM";
   if (c.nombre.trim().length < 3) f.push("nombre");
   if (c.dni.trim().length < 8) f.push("DNI/CE");
-  if (!/^9\d{8}$/.test(c.telefono.trim())) f.push("celular");
+  if (c.telefono.replace(/\D/g, "").length < 6) f.push("celular");   // sin reglas de formato
   if (!shalom && c.empresa.trim().length < 2) f.push("empresa");
   if (shalom ? !c.agencia : c.agenciaOtra.trim().length < 3) f.push("agencia");
+  if (shalom && c.agencia && c.confianza === "baja" && !c.agenciaConfirmada) f.push("confirmar agencia");
+  if ((c.duplicados.length || dupLote) && !c.dupConfirmado) f.push("confirmar posible duplicado");
   if (c.monto.trim() !== "" && (isNaN(parseFloat(c.monto)) || parseFloat(c.monto) <= 0)) f.push("monto válido");
   return f;
 }
@@ -74,6 +105,9 @@ export default function EnviosVentasClient() {
   const [pc, setPc] = useState("");            // IP de la PC de la tienda (impresión por WiFi)
   const [editPc, setEditPc] = useState(false);
   const [ultimoLote, setUltimoLote] = useState(null);
+  const [grupos, setGrupos] = useState([]);        // últimos grupos registrados (guardados en el celular)
+  const [verGrupos, setVerGrupos] = useState(false);
+  const [datosMoviles, setDatosMoviles] = useState(false);
 
   useEffect(() => {
     const ipUrl = (sp.get("pc") || "").trim();
@@ -82,6 +116,14 @@ export default function EnviosVentasClient() {
     if (t === "9no" || t === "6to") setTienda(t);
     const p = lsGet("ev_pin");
     if (p) { setPin(p); verificar(p, true); }
+    setGrupos(leerGrupos());
+    // Aviso si el celular está usando datos móviles (solo Android/Chrome lo informa)
+    const con = typeof navigator !== "undefined" && navigator.connection;
+    if (con) {
+      const revisar = () => setDatosMoviles(con.type === "cellular");
+      revisar();
+      try { con.addEventListener("change", revisar); } catch {}
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -122,17 +164,19 @@ export default function EnviosVentasClient() {
       const j = await r.json();
       if (r.status === 401) { upd(c.key, { estado: "vacio" }); setAutenticado(false); setPinMsg("Tu clave cambió. Ingrésala de nuevo."); return; }
       if (!j.ok) { upd(c.key, { estado: "error", msg: j.msg || "No se pudo analizar." }); return; }
-      const d = j.datos;
-      upd(c.key, {
-        estado: "listo", msg: "",
-        nombre: d.nombre, dni: d.dni, telefono: d.telefono,
-        empresa: d.empresa || "SHALOM",
-        agencia: j.agencia ? agenciaPorId(j.agencia.id) || j.agencia : null,
-        agenciaOtra: d.agenciaOtra || "",
-        monto: d.monto ? String(d.monto) : "",
-        textoDestino: d.textoDestino, observaciones: d.observaciones,
-        alternativas: j.alternativas || [], confianza: j.confianza || "",
-        advertencias: j.advertencias || [],
+      const lista = j.clientes || [];
+      if (!lista.length) { upd(c.key, { estado: "error", msg: "No se encontraron datos de clientes." }); return; }
+      // El 1er cliente llena esta tarjeta; si la IA encontró VARIOS clientes en el mismo
+      // texto, se crean tarjetas nuevas justo debajo (máximo 40 en total).
+      setClientes((cs) => {
+        const i = cs.findIndex((x) => x.key === c.key);
+        if (i < 0) return cs;
+        const varios = lista.length > 1;
+        const primero = { ...cs[i], ...datosDesdeIA(lista[0]), texto: varios && lista[0].texto ? lista[0].texto : cs[i].texto };
+        const espacio = Math.max(0, MAX_CLIENTES - cs.length);
+        const extras = lista.slice(1, 1 + espacio).map((res) => ({ ...nuevoCliente(), ...datosDesdeIA(res), texto: res.texto || c.texto }));
+        if (lista.length - 1 > espacio) setAviso(`La IA encontró ${lista.length} clientes; solo caben ${MAX_CLIENTES} por grupo. Registra estos y pega el resto en un grupo nuevo.`);
+        return [...cs.slice(0, i), primero, ...extras, ...cs.slice(i + 1)];
       });
     } catch {
       upd(c.key, { estado: "error", msg: "Sin conexión. Vuelve a presionar Analizar." });
@@ -152,6 +196,38 @@ export default function EnviosVentasClient() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // ── Duplicados: ¿este DNI ya se registró en los últimos días? (lee el Sheet vía Vercel) ──
+  async function revisarDuplicados(lista) {
+    const dnis = [...new Set(lista.map((c) => c.dni.trim()).filter((d) => d.length >= 8))];
+    if (!dnis.length) return 0;
+    try {
+      const r = await fetch("/api/envios-ventas/duplicados", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-ventas-pin": pin },
+        body: JSON.stringify({ dnis }),
+      });
+      const j = await r.json();
+      if (!j.ok || !j.disponible) return 0;
+      let nuevos = 0;
+      for (const c of lista) {
+        const enc = j.encontrados?.[c.dni.trim()] || [];
+        if (enc.length && !c.dupConfirmado) nuevos++;
+        upd(c.key, { duplicados: enc, dupRevisado: c.dni.trim() });
+      }
+      return nuevos;
+    } catch {
+      return 0;   // sin conexión al Sheet: no bloquea el registro
+    }
+  }
+
+  // Revisa duplicados apenas termina el análisis
+  useEffect(() => {
+    if (analizando) return;
+    const pendientes = clientes.filter((c) => c.estado === "listo" && c.dni.trim().length >= 8 && c.dupRevisado !== c.dni.trim());
+    if (pendientes.length) revisarDuplicados(pendientes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analizando, clientes.map((c) => c.estado + c.dni).join("|")]);
+
   // ── Registrar en el Sheet + imprimir ─────────────────────────────────────
   async function registrarTodos() {
     const porRegistrar = clientes.filter((c) => c.estado === "listo");
@@ -161,6 +237,15 @@ export default function EnviosVentasClient() {
     const w = pc ? window.open("about:blank", "_blank") : null;
     if (w) w.document.write("<p style='font-family:Arial;padding:30px;font-size:18px'>Registrando envíos…</p>");
     setRegistrando(true);
+    // Última revisión de duplicados (por si se editó un DNI justo antes)
+    const sinRevisar = porRegistrar.filter((c) => c.dupRevisado !== c.dni.trim());
+    if (sinRevisar.length && (await revisarDuplicados(sinRevisar)) > 0) {
+      setRegistrando(false);
+      if (w) w.close();
+      setAviso("Se encontraron posibles duplicados: revisa los clientes marcados en rojo.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const { fecha, hora } = fechaHora();
     const hechos = [];
     for (const c of porRegistrar) {
@@ -194,6 +279,9 @@ export default function EnviosVentasClient() {
     if (hechos.length) {
       const lote = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       setUltimoLote({ lote, regs: hechos });
+      const g = [{ lote, fecha, hora, tienda: TIENDAS[tienda], regs: hechos }, ...leerGrupos()];
+      guardarGrupos(g);
+      setGrupos(g.slice(0, MAX_GRUPOS_GUARDADOS));
       if (w) w.location.href = urlImpresionWifi(pc, lote, hechos);
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     } else if (w) {
@@ -207,6 +295,15 @@ export default function EnviosVentasClient() {
     if (ultimoLote) window.open(urlImpresionWifi(pc, ultimoLote.lote, ultimoLote.regs), "_blank");
   }
 
+  // Reimprimir (todo o algunos) de un grupo guardado en este celular
+  function reimprimirGrupo(grupo, indices) {
+    if (!pc) { setEditPc(true); window.scrollTo(0, 0); return; }
+    const regs = grupo.regs.filter((_, i) => indices.includes(i));
+    if (!regs.length) return;
+    const lote = grupo.lote + "-r" + Date.now().toString(36);   // lote nuevo: se imprime aunque ya se haya impreso
+    window.open(urlImpresionWifi(pc, lote, regs), "_blank");
+  }
+
   function guardarPc(v) {
     const ip = v.trim().replace(/^https?:\/\//, "").replace(/[:/].*$/, "");
     setPc(ip); lsSet("ev_pc", ip); setEditPc(false);
@@ -217,7 +314,7 @@ export default function EnviosVentasClient() {
     if (regs.length) imprimirGuias(regs, window.open("", "_blank", "width=850,height=700"));
   }
 
-  function agregar() { setClientes((cs) => [...cs, nuevoCliente()]); }
+  function agregar() { setClientes((cs) => (cs.length >= MAX_CLIENTES ? cs : [...cs, nuevoCliente()])); }
   function quitar(key) { setClientes((cs) => (cs.length === 1 ? [nuevoCliente()] : cs.filter((c) => c.key !== key))); }
   function nuevoLote() {
     if (clientes.some((c) => c.estado === "listo") && !confirm("Hay clientes sin registrar. ¿Borrar todo igual?")) return;
@@ -228,10 +325,18 @@ export default function EnviosVentasClient() {
   const porAnalizar = clientes.filter((c) => c.texto.trim() && (c.estado === "vacio" || c.estado === "error")).length;
   const listos = clientes.filter((c) => c.estado === "listo");
   const registrados = clientes.filter((c) => c.estado === "registrado").length;
+  // DNI repetido dentro de esta misma lista → número del otro cliente
+  const dupLote = {};
+  clientes.forEach((c, i) => {
+    const d = c.dni.trim();
+    if (d.length < 8 || c.estado === "registrado") return;
+    const j = clientes.findIndex((o, k) => k !== i && o.estado !== "registrado" && o.dni.trim() === d);
+    if (j >= 0) dupLote[c.key] = j + 1;
+  });
   const bloqueos = clientes
     .map((c, i) => ({ n: i + 1, c }))
-    .filter(({ c }) => c.estado === "listo" && faltantes(c).length)
-    .map(({ n, c }) => `Cliente ${n}: falta ${faltantes(c).join(", ")}`);
+    .filter(({ c }) => c.estado === "listo" && faltantes(c, dupLote[c.key]).length)
+    .map(({ n, c }) => `Cliente ${n}: falta ${faltantes(c, dupLote[c.key]).join(", ")}`);
   const sinAnalizar = clientes
     .map((c, i) => ({ n: i + 1, c }))
     .filter(({ c }) => c.texto.trim() && c.estado !== "listo" && c.estado !== "registrado" && c.estado !== "registrando")
@@ -298,11 +403,14 @@ export default function EnviosVentasClient() {
 
         {clientes.map((c, i) => (
           <ClienteCard key={c.key} c={c} n={i + 1}
+            dupLote={dupLote[c.key] || 0}
             onChange={(cambios) => upd(c.key, cambios)}
             onQuitar={() => quitar(c.key)} />
         ))}
 
-        <button className="ev-btn-ghost" onClick={agregar} disabled={analizando || registrando}>＋ Agregar cliente {clientes.length + 1}</button>
+        {clientes.length < MAX_CLIENTES
+          ? <button className="ev-btn-ghost" onClick={agregar} disabled={analizando || registrando}>＋ Agregar cliente {clientes.length + 1}</button>
+          : <div className="ev-count">Máximo {MAX_CLIENTES} clientes por grupo.</div>}
 
         <div className="ev-foot">
           <div className="ev-count">{clientes.length} cliente(s) · {registrados} registrados · {listos.length} por registrar · {porAnalizar} por analizar</div>
@@ -322,6 +430,11 @@ export default function EnviosVentasClient() {
                   {sinAnalizar.length > 0 && !analizando && <div>• Cliente {sinAnalizar.join(", ")}: falta analizar (o quítalo con ✕)</div>}
                 </div>
               )}
+              <div className={"ev-wifi" + (datosMoviles ? " mal" : "")}>
+                {datosMoviles
+                  ? "📵 Estás usando DATOS MÓVILES: conéctate al WiFi de la tienda para que se imprima."
+                  : "📶 Para imprimir, el celular debe estar conectado al WiFi de la tienda."}
+              </div>
               <button className="ev-btn ev-btn-ok" onClick={registrarTodos}
                 disabled={registrando || analizando || bloqueos.length > 0 || sinAnalizar.length > 0}>
                 {registrando ? "Registrando…" : `✔ Registrar e imprimir (${listos.length})`}
@@ -332,7 +445,7 @@ export default function EnviosVentasClient() {
           {registrados > 0 && !listos.length && (
             <div className="ev-ok-box">
               ✅ {registrados} envío(s) registrados.{pc ? " Las etiquetas se enviaron a la impresora de la tienda." : " Configura la PC de la tienda para imprimir."}
-              {ultimoLote && pc && <div style={{ fontWeight: 400, fontSize: 13 }}>Si la pestaña de impresión no cargó, la PC está apagada, dormida o en otra red. Revisa y presiona:</div>}
+              {ultimoLote && pc && <div style={{ fontWeight: 400, fontSize: 13 }}>📶 Si la pestaña de impresión no cargó: conéctate al WiFi de la tienda (no datos móviles) y revisa que la PC esté encendida. Luego presiona:</div>}
               {ultimoLote && <button className="ev-btn ev-btn-sec" onClick={imprimirEnTienda}>🖨 Reenviar a la impresora de la tienda</button>}
               <div className="ev-ok-btns">
                 <button className="ev-btn ev-btn-sec" onClick={reimprimir}>Imprimir aquí (A4)</button>
@@ -341,21 +454,47 @@ export default function EnviosVentasClient() {
             </div>
           )}
         </div>
+
+        {grupos.length > 0 && (
+          <div className="ev-grupos">
+            <button className="ev-link" onClick={() => setVerGrupos(!verGrupos)}>
+              🕘 Últimos grupos registrados en este celular ({grupos.length}) {verGrupos ? "▲" : "▼"}
+            </button>
+            {verGrupos && grupos.map((g) => <GrupoGuardado key={g.lote} g={g} onReimprimir={(idx) => reimprimirGrupo(g, idx)} />)}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function ClienteCard({ c, n, onChange, onQuitar }) {
+function GrupoGuardado({ g, onReimprimir }) {
+  const [sel, setSel] = useState(() => g.regs.map((_, i) => i));
+  const toggle = (i) => setSel((s) => (s.includes(i) ? s.filter((x) => x !== i) : [...s, i]));
+  return (
+    <div className="ev-grupo">
+      <div className="ev-grupo-h">{g.fecha} {g.hora} · {g.tienda} · {g.regs.length} envío(s)</div>
+      {g.regs.map((r, i) => (
+        <label key={i} className="ev-grupo-it">
+          <input type="checkbox" checked={sel.includes(i)} onChange={() => toggle(i)} />
+          <span><b>{r.nombre}</b> · {r.agencia}{r.departamento ? " (" + r.departamento + ")" : ""}</span>
+        </label>
+      ))}
+      <button className="ev-btn ev-btn-sec sm" disabled={!sel.length} onClick={() => onReimprimir(sel)}>🖨 Reimprimir seleccionados ({sel.length})</button>
+    </div>
+  );
+}
+
+function ClienteCard({ c, n, dupLote, onChange, onQuitar }) {
   const bloqueado = c.estado === "registrado" || c.estado === "registrando";
   const analizado = ["listo", "registrando", "registrado"].includes(c.estado);
   const shalom = c.empresa === "SHALOM";
-  const falta = c.estado === "listo" ? faltantes(c) : [];
+  const falta = c.estado === "listo" ? faltantes(c, dupLote) : [];
   const resultados = c.buscando && c.q.trim().length >= 2 ? filtrarAgencias(c.q, 40) : [];
   const err = (k) => falta.includes(k);
 
   function elegirAgencia(a) {
-    onChange({ agencia: a, buscando: false, q: "", confianza: "manual" });
+    onChange({ agencia: a, buscando: false, q: "", confianza: "manual", agenciaConfirmada: true });
   }
 
   const badge = {
@@ -393,6 +532,22 @@ function ClienteCard({ c, n, onChange, onQuitar }) {
               </div>
             )}
 
+            {(c.duplicados.length > 0 || dupLote > 0) && c.estado !== "registrado" && (
+              <div className="ev-dup">
+                <b>⚠ Posible envío duplicado</b>
+                {dupLote > 0 && <div>Este DNI también está en el <b>Cliente {dupLote}</b> de esta lista.</div>}
+                {c.duplicados.map((d, k) => (
+                  <div key={k}>Ya registrado el {d.fecha} {d.hora} · {d.tienda} · {d.agencia}{d.nombre ? " · " + d.nombre : ""}</div>
+                ))}
+                {!bloqueado && (
+                  <label className="ev-check">
+                    <input type="checkbox" checked={c.dupConfirmado} onChange={(e) => onChange({ dupConfirmado: e.target.checked })} />
+                    Es otro envío distinto, registrar igual
+                  </label>
+                )}
+              </div>
+            )}
+
             <Campo label="Nombre y apellidos *" err={err("nombre") && "Falta el nombre"}>
               <input className={"ev-input" + (err("nombre") ? " bad" : "")} value={c.nombre} disabled={bloqueado} onChange={(e) => onChange({ nombre: e.target.value.toUpperCase() })} />
             </Campo>
@@ -400,8 +555,8 @@ function ClienteCard({ c, n, onChange, onQuitar }) {
               <Campo label="DNI / CE *" err={err("DNI/CE") && "Mínimo 8 dígitos"}>
                 <input className={"ev-input mono" + (err("DNI/CE") ? " bad" : "")} value={c.dni} inputMode="numeric" disabled={bloqueado} onChange={(e) => onChange({ dni: e.target.value.replace(/\s/g, "").toUpperCase() })} />
               </Campo>
-              <Campo label="Celular *" err={err("celular") && "9 dígitos, empieza en 9"}>
-                <input className={"ev-input mono" + (err("celular") ? " bad" : "")} value={c.telefono} inputMode="numeric" maxLength={9} disabled={bloqueado} onChange={(e) => onChange({ telefono: e.target.value.replace(/\D/g, "") })} />
+              <Campo label="Celular *" err={err("celular") && "Falta el número"}>
+                <input className={"ev-input mono" + (err("celular") ? " bad" : "")} value={c.telefono} inputMode="tel" maxLength={16} disabled={bloqueado} onChange={(e) => onChange({ telefono: e.target.value.replace(/[^\d+]/g, "") })} />
               </Campo>
             </div>
 
@@ -427,6 +582,12 @@ function ClienteCard({ c, n, onChange, onQuitar }) {
                       {c.confianza === "baja" && "IA: coincidencia baja — verifica"}
                       {c.confianza === "manual" && "Elegida manualmente"}
                     </div>
+                    {c.confianza === "baja" && !bloqueado && (
+                      <label className={"ev-check" + (err("confirmar agencia") ? " bad" : "")}>
+                        <input type="checkbox" checked={c.agenciaConfirmada} onChange={(e) => onChange({ agenciaConfirmada: e.target.checked })} />
+                        Confirmo que esta es la agencia correcta
+                      </label>
+                    )}
                   </div>
                 ) : <div className="ev-ag vacia">Sin agencia elegida</div>}
 
@@ -434,7 +595,9 @@ function ClienteCard({ c, n, onChange, onQuitar }) {
                   <div className="ev-alts">
                     <span>Otras opciones posibles:</span>
                     {c.alternativas.filter((a) => !c.agencia || a.id !== c.agencia.id).map((a) => (
-                      <button key={a.id} className="ev-alt" onClick={() => elegirAgencia(agenciaPorId(a.id) || a)}>{a.n} <small>({a.dist})</small></button>
+                      <button key={a.id} className="ev-alt" onClick={() => elegirAgencia(agenciaPorId(a.id) || a)}>
+                        {a.n}<small>{a.dist} · {a.prov} · {a.dep}</small>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -498,7 +661,7 @@ const PUERTO_IMPRESION = 5003;
 function urlImpresionWifi(ip, lote, regs) {
   const datos = {
     lote,
-    r: regs.map((r) => ({ n: r.nombre, d: r.dni, t: r.telefono, a: r.agencia, e: r.empresa, m: r.monto, f: r.fecha, h: r.hora, ti: r.tienda })),
+    r: regs.map((r) => ({ n: r.nombre, d: r.dni, t: r.telefono, a: r.agencia, e: r.empresa, m: r.monto, f: r.fecha, h: r.hora, ti: r.tienda, dp: r.departamento || "" })),
   };
   const bytes = new TextEncoder().encode(JSON.stringify(datos));
   let bin = "";
@@ -638,7 +801,20 @@ const CSS = `
   .ev-ag-c { font-size: 11px; font-weight: 600; color: #555; margin-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
   .ev-alts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: #666; }
   .ev-alt { border: 1px solid #ddddd8; background: #f5f4f0; border-radius: 16px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .ev-alt small { font-weight: 400; color: #777; }
+  .ev-alt { display: flex; flex-direction: column; align-items: flex-start; text-align: left; border-radius: 10px; }
+  .ev-alt small { font-weight: 400; color: #777; font-size: 11px; }
+  .ev-check { display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; margin-top: 8px; cursor: pointer; }
+  .ev-check.bad { color: #b91c1c; }
+  .ev-check input { width: 18px; height: 18px; }
+  .ev-dup { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 10px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+  .ev-wifi { font-size: 13px; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 8px 12px; }
+  .ev-wifi.mal { color: #991b1b; background: #fef2f2; border-color: #fca5a5; font-weight: 700; }
+  .ev-grupos { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .ev-grupo { background: #fff; border: 1.5px solid #ddddd8; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .ev-grupo-h { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .5px; }
+  .ev-grupo-it { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+  .ev-grupo-it input { margin-top: 2px; width: 16px; height: 16px; }
+  .ev-btn.sm { padding: 10px 12px; font-size: 13px; }
   .ev-search { display: flex; flex-direction: column; gap: 6px; }
   .ev-res { max-height: 260px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; }
   .ev-res-it { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; padding: 9px 12px; border: none; border-bottom: 1px solid #f0f0f0; background: #fff; cursor: pointer; font-size: 14px; }
