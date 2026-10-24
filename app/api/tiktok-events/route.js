@@ -1,5 +1,10 @@
+import { filtrarEvento } from '../../lib/seguridad';
+
 export async function POST(req) {
-  const body = await req.json();
+  let body;
+  try { body = await req.json(); } catch { return Response.json({ success: false, error: 'JSON no válido' }, { status: 400 }); }
+  const rechazo = filtrarEvento(req, body);
+  if (rechazo) return rechazo;
   const { eventName, eventId, eventData } = body;
 
   const payload = {

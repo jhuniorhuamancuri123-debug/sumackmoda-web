@@ -23,6 +23,10 @@ export default function BuscadorBtn() {
   }, [query]);
 
   async function buscar(q) {
+    // Sólo letras, números, espacios y guiones: evita que el texto altere la consulta
+    const limpio = q.replace(/[^\p{L}\p{N}\s-]/gu, '').trim();
+    if (!limpio) { setResultados([]); return; }
+    q = limpio;
     setBuscando(true);
     const texto = q.trim().toUpperCase();
     const { data } = await supabase

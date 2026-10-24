@@ -1,5 +1,6 @@
 import { alegraClient, parseCodigo } from '../../lib/alegra';
-import { supabase } from '../../lib/supabase';
+import { supabaseAdmin as supabase } from '../../lib/supabaseAdmin';
+import { autorizadoInterno, noAutorizado } from '../../lib/seguridad';
 
 const ALMACEN_9NO = "1";
 const ALMACEN_6TO = "2";
@@ -21,6 +22,7 @@ function getPrecioTotal(item) {
 }
 
 export async function GET(request) {
+  if (!autorizadoInterno(request)) return noAutorizado();
   try {
     const { searchParams } = new URL(request.url);
     const startPage  = parseInt(searchParams.get('page') || '0');

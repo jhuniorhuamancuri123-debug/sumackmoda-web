@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Correr sync completo
         id: sync
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
         run: |
           # Formato sin caracteres especiales para evitar problemas en URLs
           SESSION=$(date -u +"%Y%m%dT%H%M%SZ")
@@ -17,7 +19,7 @@ jobs:
           page=0
           while true; do
             echo "Sincronizando página $page..."
-            response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync?page=$page&session=$SESSION")
+            response=$(curl -s -H "Authorization: Bearer $SYNC_SECRET" "https://sumackmoda-web.vercel.app/api/sync?page=$page&session=$SESSION")
             echo "$response"
             if echo "$response" | grep -q '"hay_mas":false'; then
               echo "Sync completo en página $page"
@@ -31,9 +33,11 @@ jobs:
           done
 
       - name: Limpiar productos eliminados
+        env:
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
         run: |
           SESSION="${{ steps.sync.outputs.session }}"
           echo "Limpiando con session: $SESSION"
-          response=$(curl -s "https://sumackmoda-web.vercel.app/api/sync/cleanup?session=$SESSION")
+          response=$(curl -s -H "Authorization: Bearer $SYNC_SECRET" "https://sumackmoda-web.vercel.app/api/sync/cleanup?session=$SESSION")
           echo "$response"
           echo "Limpieza completada"

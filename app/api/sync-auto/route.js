@@ -1,6 +1,8 @@
-import { supabase } from '../../lib/supabase';
+import { supabaseAdmin as supabase } from '../../lib/supabaseAdmin';
+import { autorizadoInterno, noAutorizado } from '../../lib/seguridad';
 
 export async function GET(request) {
+  if (!autorizadoInterno(request)) return noAutorizado();
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sumackmoda-web.vercel.app';
 
@@ -15,7 +17,9 @@ export async function GET(request) {
     console.log(`Iniciando sync completo | session=${syncSession}`);
 
     while (hayMas && pagina < 35) {
-      const res  = await fetch(`${baseUrl}/api/sync?page=${pagina}&session=${syncSession}`);
+      const res  = await fetch(`${baseUrl}/api/sync?page=${pagina}&session=${syncSession}`, {
+        headers: { Authorization: `Bearer ${process.env.SYNC_SECRET}` },
+      });
       const data = await res.json();
 
       if (!data.success) {

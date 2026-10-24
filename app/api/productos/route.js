@@ -1,6 +1,8 @@
 import { getItems, parseCodigo } from '../../lib/alegra';
+import { autorizadoInterno, noAutorizado } from '../../lib/seguridad';
 
-export async function GET() {
+export async function GET(request) {
+  if (!autorizadoInterno(request)) return noAutorizado();
   try {
     const items = await getItems();
     
