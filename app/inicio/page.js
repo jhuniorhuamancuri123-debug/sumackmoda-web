@@ -65,6 +65,14 @@ async function getProductosDestacados() {
     }));
 }
 
+// Portada: fotos tipo polaroid que caen sobre la mesa (en public/portada/)
+const POLAROIDS = [
+  { src: '/portada/foto-cama.webp', giro: '-6deg', desde: '-40px' },
+  { src: '/portada/foto-ascensor.webp', giro: '5deg', desde: '40px' },
+  { src: '/portada/foto-calle.webp', giro: '7deg', desde: '-30px' },
+  { src: '/portada/foto-doblados.webp', giro: '-5deg', desde: '30px' },
+];
+
 const RAZONES = [
   { t: 'Fabricantes, no revendedores', d: 'Vendemos lo que producimos. Entre nuestro taller y tú no hay intermediarios.' },
   { t: 'Medidas publicadas', d: 'Largo, pecho y manga de cada talla en la guía. Eliges con datos, no a ojo.' },
@@ -81,7 +89,7 @@ export default async function Home() {
   return (
     <>
       {/* HERO: el logo se arma pieza por pieza y una costura lo subraya */}
-      <section className="hero sobre-oscuro">
+      <section className="hero hero-mesa sobre-oscuro">
         <div className="hero-texto">
           <h1 className="hero-logo">
             <Logo animado titulo="SUMACK" />
@@ -97,8 +105,18 @@ export default async function Home() {
             <Link href="/guia-de-tallas" className="btn btn-linea">Encontrar mi talla</Link>
           </div>
         </div>
-        <div className="hero-foto">
-          <img src="/hero-polo.webp" alt="Caballero con polo bicolor SUMACK" fetchPriority="high" width="1366" height="941" />
+        <div className="mesa-fotos" role="img" aria-label="Fotos de polos SUMACK sobre una mesa de madera">
+          {POLAROIDS.map((f, i) => (
+            <figure
+              key={f.src}
+              className={`polaroid polaroid-${i + 1}`}
+              style={{ '--r': f.giro, '--delay': `${0.7 + i * 0.32}s`, '--desde': f.desde }}
+            >
+              <div className="polaroid-papel">
+                <img src={f.src} alt="" width="700" height="875" fetchPriority={i < 2 ? 'high' : 'auto'} />
+              </div>
+            </figure>
+          ))}
         </div>
       </section>
 
