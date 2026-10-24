@@ -67,10 +67,10 @@ async function getProductosDestacados() {
 
 // Portada: fotos tipo polaroid que caen sobre la mesa (en public/portada/)
 const POLAROIDS = [
-  { src: '/portada/foto-cama.webp', giro: '-6deg', desde: '-40px' },
-  { src: '/portada/foto-ascensor.webp', giro: '5deg', desde: '40px' },
-  { src: '/portada/foto-calle.webp', giro: '7deg', desde: '-30px' },
-  { src: '/portada/foto-doblados.webp', giro: '-5deg', desde: '30px' },
+  { src: '/portada/foto-cama.webp', giro: '-5deg', desde: '0px' },
+  { src: '/portada/foto-ascensor.webp', giro: '3deg', desde: '0px' },
+  { src: '/portada/foto-bicolor.webp', giro: '4deg', desde: '0px' },
+  { src: '/portada/foto-doblados.webp', giro: '-4deg', desde: '0px' },
 ];
 
 const RAZONES = [
@@ -110,7 +110,7 @@ export default async function Home() {
             <figure
               key={f.src}
               className={`polaroid polaroid-${i + 1}`}
-              style={{ '--r': f.giro, '--delay': `${0.7 + i * 0.32}s`, '--desde': f.desde }}
+              style={{ '--r': f.giro, '--delay': `${0.5 + i * 0.18}s`, '--desde': f.desde }}
             >
               <div className="polaroid-papel">
                 <img src={f.src} alt="" width="700" height="875" fetchPriority={i < 2 ? 'high' : 'auto'} />

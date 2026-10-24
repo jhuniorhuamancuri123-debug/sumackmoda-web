@@ -659,57 +659,66 @@ p { text-wrap: pretty; }
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(90deg, rgba(18,11,6,0.9) 0%, rgba(18,11,6,0.72) 32%, rgba(18,11,6,0.15) 62%, rgba(18,11,6,0) 80%);
 }
-/* La lámpara "se enciende" al cargar */
+/* Luz cálida de la lámpara: aparece suave al cargar */
 .hero-mesa::after {
   content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: radial-gradient(circle at 93% 6%, rgba(255,186,105,0.32), rgba(255,186,105,0.08) 28%, transparent 48%);
-  animation: luz-lampara 2.2s 0.2s ease-out both;
+  background: radial-gradient(circle at 93% 6%, rgba(255,186,105,0.22), rgba(255,186,105,0.06) 30%, transparent 50%);
+  animation: fundido 1.6s 0.1s ease-out both;
 }
-@keyframes luz-lampara { 0% { opacity: 0; } 35% { opacity: 0.6; } 45% { opacity: 0.25; } 100% { opacity: 1; } }
 .hero-mesa .hero-texto { position: relative; z-index: 2; }
 
 .mesa-fotos { position: relative; min-height: 560px; }
 .polaroid {
-  position: absolute; margin: 0; width: 36%;
+  position: absolute; margin: 0; width: 25%;
   transform: rotate(var(--r));
-  animation: cae-foto 1.15s var(--delay) cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  animation: asienta-foto 1.4s var(--delay) cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
-.polaroid-1 { left: 8%;  top: 9%;  z-index: 1; }
-.polaroid-2 { left: 50%; top: 13%; z-index: 2; }
-.polaroid-3 { left: 12%; top: 49%; z-index: 3; }
-.polaroid-4 { left: 49%; top: 52%; z-index: 4; }
+.polaroid-1 { left: 7%;  top: 11%; z-index: 1; }
+.polaroid-2 { left: 52%; top: 7%;  z-index: 2; }
+.polaroid-3 { left: 17%; top: 52%; z-index: 3; }
+.polaroid-4 { left: 59%; top: 49%; z-index: 4; }
 
+/* Las fotos se tiñen con la luz de la mesa para que parezcan apoyadas en ella */
 .polaroid-papel {
-  /* Las fotos ya traen su marco de polaroid; aquí sólo va la sombra sobre la mesa */
-  box-shadow: 0 2px 3px rgba(0,0,0,0.35), 0 14px 26px rgba(0,0,0,0.45);
-  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.55), 0 10px 22px rgba(10,5,2,0.55);
+  transition: transform 0.6s var(--ease), box-shadow 0.6s var(--ease);
 }
-.polaroid-papel img { display: block; width: 100%; height: auto; }
+.polaroid-papel img {
+  display: block; width: 100%; height: auto;
+  filter: sepia(0.32) saturate(1.02) brightness(0.9) contrast(0.97);
+}
+/* Luz que viene de la lámpara (arriba a la derecha) y sombra hacia abajo a la izquierda */
+.polaroid-papel::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(215deg, rgba(255,200,130,0.30) 0%, rgba(225,150,85,0.30) 50%, rgba(110,60,25,0.42) 100%);
+  mix-blend-mode: multiply;
+}
+.polaroid-1 .polaroid-papel::after, .polaroid-3 .polaroid-papel::after {
+  background: linear-gradient(215deg, rgba(235,160,95,0.30) 0%, rgba(170,100,50,0.36) 55%, rgba(70,38,15,0.52) 100%);
+}
 @media (hover: hover) and (pointer: fine) {
   .polaroid:hover { z-index: 10; }
   .polaroid:hover .polaroid-papel {
-    transform: translateY(-10px) rotate(calc(var(--r) * -0.8)) scale(1.04);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 30px 50px rgba(0,0,0,0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.5), 0 18px 32px rgba(10,5,2,0.55);
   }
 }
-/* Cae desde arriba, girando, y se asienta sobre la mesa con un pequeño rebote */
-@keyframes cae-foto {
-  0%   { opacity: 0; transform: translate(var(--desde), -90px) rotate(calc(var(--r) * 3)) scale(1.35); filter: blur(2px); }
-  55%  { opacity: 1; filter: blur(0); }
-  72%  { transform: translate(0, 4px) rotate(calc(var(--r) * 0.85)) scale(0.985); }
-  88%  { transform: translate(0, -2px) rotate(var(--r)) scale(1.008); }
-  100% { opacity: 1; transform: rotate(var(--r)) scale(1); filter: blur(0); }
+/* Entrada sobria: la foto aparece y se asienta sobre la mesa, sin rebotes */
+@keyframes asienta-foto {
+  from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--r) + 1.5deg)) scale(1.02); }
+  to   { opacity: 1; transform: rotate(var(--r)) scale(1); }
 }
 
 @media (max-width: 900px) {
   .hero-mesa { grid-template-columns: 1fr; background-position: 70% top; }
   .hero-mesa::before { background: linear-gradient(180deg, rgba(18,11,6,0.05) 0%, rgba(18,11,6,0.25) 40%, rgba(18,11,6,0.88) 62%, rgba(18,11,6,0.92) 100%); }
   .mesa-fotos { order: -1; min-height: 0; width: min(100%, 560px); margin: 0 auto; height: min(96vw, 560px); }
-  .polaroid { width: 40%; }
-  .polaroid-1 { left: 5%;  top: 5%; }
-  .polaroid-2 { left: 51%; top: 8%; }
-  .polaroid-3 { left: 8%;  top: 48%; }
-  .polaroid-4 { left: 50%; top: 50%; }
+  .polaroid { width: 35%; }
+  .polaroid-1 { left: 6%;  top: 5%; }
+  .polaroid-2 { left: 56%; top: 3%; }
+  .polaroid-3 { left: 11%; top: 50%; }
+  .polaroid-4 { left: 55%; top: 48%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .polaroid { animation-name: fundido; }
