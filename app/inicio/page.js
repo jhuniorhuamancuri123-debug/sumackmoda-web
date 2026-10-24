@@ -5,6 +5,7 @@ import Logo from '../components/Logo';
 import Proceso from '../components/Proceso';
 import { IconoWA } from '../components/SiteFooter';
 import { RESENAS } from '../data/resenas';
+import { RESENAS_EJEMPLO } from '../data/resenas-ejemplo';
 import { GARANTIAS, WHATSAPP } from '../data/marca';
 
 export const metadata = {
@@ -81,6 +82,11 @@ const RAZONES = [
   { t: 'Cambios dentro de 4 días', d: 'Si la talla no fue la correcta, la cambiamos según nuestra política de cambios.' },
   { t: 'Dos tiendas en Gamarra', d: 'Si estás en Lima, puedes ver las prendas en persona antes de decidir.' },
 ];
+
+// Reseñas reales; si aún no hay, en la PC (modo prueba) se ven las de ejemplo.
+// En la web publicada (producción) las de ejemplo NUNCA se muestran.
+const ES_PRUEBA = process.env.NODE_ENV === 'development' && RESENAS.length === 0;
+const RESENAS_VISIBLES = RESENAS.length > 0 ? RESENAS : (ES_PRUEBA ? RESENAS_EJEMPLO : []);
 
 export default async function Home() {
   const destacados = await getProductosDestacados();
@@ -183,16 +189,21 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* RESEÑAS: sólo si hay reseñas reales cargadas en app/data/resenas.js */}
-      {RESENAS.length > 0 && (
+      {/* RESEÑAS: reales de app/data/resenas.js (las de ejemplo sólo en modo prueba) */}
+      {RESENAS_VISIBLES.length > 0 && (
         <section className="seccion seccion-piedra">
           <div className="wrap">
-            <div className="seccion-header"><div><h2 className="t-titulo">Lo que dicen nuestros clientes</h2></div></div>
-            <div className="resenas">
-              {RESENAS.map((r, i) => (
-                <figure key={i} className="resena">
-                  <blockquote>“{r.texto}”</blockquote>
-                  <figcaption><strong>{r.autor}</strong>{r.origen ? `, ${r.origen}` : ''}</figcaption>
+            <div className="seccion-header">
+              <div>
+                <h2 className="t-titulo">Lo que nos escriben después de recibir su pedido</h2>
+                {ES_PRUEBA && <p className="resenas-aviso">Vista de prueba: reseñas de ejemplo, no se publican.</p>}
+              </div>
+            </div>
+            <div className="resenas-fila">
+              {RESENAS_VISIBLES.map((r, i) => (
+                <figure key={i} className="resena-wa">
+                  <blockquote>{r.texto}</blockquote>
+                  <figcaption><strong>{r.autor}</strong>{r.origen ? ` · ${r.origen}` : ''}</figcaption>
                 </figure>
               ))}
             </div>
