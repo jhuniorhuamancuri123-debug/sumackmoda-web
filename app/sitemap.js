@@ -7,12 +7,6 @@ export default function sitemap() {
       priority: 1,
     },
     {
-      url: 'https://sumackmoda.com/inicio',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.9,
-    },
-    {
       url: 'https://sumackmoda.com/catalogo',
       lastModified: new Date(),
       changeFrequency: 'weekly',

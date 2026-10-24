@@ -9,7 +9,7 @@ import CarritoBtn from './CarritoBtn';
 import { WHATSAPP, WHATSAPP_VISIBLE, HORARIO } from '../data/marca';
 
 const LINKS = [
-  { href: '/inicio', label: 'Inicio', nota: 'La marca' },
+  { href: '/', label: 'Inicio', nota: 'La marca' },
   { href: '/catalogo', label: 'Catálogo', nota: 'Todos los modelos' },
   { href: '/guia-de-tallas', label: 'Guía de tallas', nota: 'Medidas' },
   { href: '/contacto', label: 'Contacto', nota: 'WhatsApp' },
@@ -34,7 +34,7 @@ export default function SiteHeader() {
     return () => window.removeEventListener('keydown', onKey);
   }, [menu]);
 
-  const activo = (href) => pathname === href || (href === '/catalogo' && (pathname === '/' || pathname.startsWith('/catalogo')));
+  const activo = (href) => pathname === href || (href === '/catalogo' && pathname.startsWith('/catalogo'));
 
   return (
     <>
@@ -50,7 +50,7 @@ export default function SiteHeader() {
               ))}
             </nav>
           </div>
-          <Link href="/inicio" className="navbar-logo" aria-label="SUMACK, ir al inicio">
+          <Link href="/" className="navbar-logo" aria-label="SUMACK, ir al inicio">
             <Logo />
           </Link>
           <div className="navbar-icons">

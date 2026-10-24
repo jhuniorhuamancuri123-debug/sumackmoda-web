@@ -19,6 +19,9 @@ const nextConfig = {
   // Solo en modo prueba (npm run dev): permite abrir la web desde el celular en el mismo WiFi
   allowedDevOrigins: ['192.168.1.119'],
   poweredByHeader: false,
+  async redirects() {
+    return [{ source: '/inicio', destination: '/', permanent: true }];
+  },
   async headers() {
     return [{ source: '/:path*', headers: encabezadosSeguridad }];
   },

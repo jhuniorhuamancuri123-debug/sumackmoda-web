@@ -5,7 +5,6 @@ export default function robots() {
         userAgent: '*',
         allow: [
           '/',
-          '/inicio',
           '/catalogo',
           '/guia-de-tallas',
           '/contacto',
