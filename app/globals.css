@@ -764,20 +764,21 @@ p { text-wrap: pretty; }
 /* =============================================================
    Ficha de producto en 3 columnas (información | foto | compra)
    ============================================================= */
-.ficha .wrap { max-width: 1560px; }
+.ficha .wrap { max-width: none; padding-left: clamp(1rem, 3.5vw, 4rem); padding-right: clamp(1rem, 3.5vw, 4rem); }
 .ficha-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.25fr) minmax(280px, 1fr);
+  /* La foto conserva su ancho; las columnas laterales se van hacia los bordes */
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 520px) minmax(300px, 1fr);
   grid-template-areas: "izq gal compra";
-  column-gap: clamp(2rem, 4vw, 4.5rem);
+  column-gap: clamp(2rem, 6vw, 9rem);
   align-items: start;
   padding-bottom: 4rem;
 }
 .ficha-galeria { grid-area: gal; position: sticky; top: calc(var(--nav-h) + 1.25rem); }
-.ficha-col-izq { grid-area: izq; }
+.ficha-col-izq { grid-area: izq; width: 100%; max-width: 460px; justify-self: start; }
 .ficha-cab { grid-area: cab; padding-top: 0.5rem; }
 .ficha-col-info { grid-area: info; padding-top: 1.25rem; }
-.ficha-col-compra { grid-area: compra; position: sticky; top: calc(var(--nav-h) + 1.25rem); padding-top: 0.5rem; }
+.ficha-col-compra { grid-area: compra; width: 100%; max-width: 460px; justify-self: end; position: sticky; top: calc(var(--nav-h) + 1.25rem); padding-top: 0.5rem; }
 
 /* Foto: proporción 4:5, alto limitado a la pantalla, fondo limpio */
 .ficha-foto {
@@ -816,7 +817,7 @@ p { text-wrap: pretty; }
     grid-template-rows: auto auto 1fr;
   }
   .ficha-col-izq { display: contents; }
-  .ficha-col-compra { position: static; }
+  .ficha-col-compra { position: static; max-width: none; justify-self: stretch; }
   .ficha-col-info { padding-top: 2rem; }
 }
 /* Celular: foto, nombre, compra e información, en ese orden */
