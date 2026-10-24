@@ -19,7 +19,7 @@ export default function SiteFooter() {
         <div className="footer-inner">
           <div className="footer-brand">
             <div className="footer-logo"><Logo /></div>
-            <p>Polos de caballero diseñados, cortados y confeccionados en Gamarra, Lima.</p>
+            <p>Polos de caballero diseñados, cortados y confeccionados en nuestro propio taller.</p>
             <div className="footer-social">
               <a href={INSTAGRAM} aria-label="Instagram" target="_blank" rel="noopener"><IconoIG /></a>
               <a href={TIKTOK} aria-label="TikTok" target="_blank" rel="noopener"><IconoTT /></a>
@@ -43,7 +43,7 @@ export default function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <p>© 2026 SUMACK. Todos los derechos reservados.</p>
-          <p>Gamarra, Lima — Perú</p>
+          <p>Lima, Perú</p>
         </div>
       </div>
     </footer>

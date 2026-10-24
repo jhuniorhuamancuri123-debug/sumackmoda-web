@@ -540,7 +540,7 @@ import { AnimatePresence, motion } from 'motion/react';
                   <details>
                     <summary>Cómo comprar</summary>
                     <div className="det-cuerpo">
-                      <p>1. Elige color y talla y agrega al carrito.</p>
+                      <p>1. Elige color y talla, y agrégalo al carrito.</p>
                       <p>2. Escribe tu nombre y confirma el pedido.</p>
                       <p>3. Se abre WhatsApp con tu pedido listo; coordinamos pago y envío contigo.</p>
                     </div>

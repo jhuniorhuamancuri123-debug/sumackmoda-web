@@ -7,10 +7,10 @@ export const HORARIO = 'Lunes a sábado, 9:00 a 19:00';
 
 // Lo que aparece en la cinta móvil del inicio: sólo afirmaciones verificables
 export const GARANTIAS = [
-  'Producción propia en Gamarra',
+  'Producción propia',
   'Envíos a todo el Perú',
   'Tallas S a XXL con medidas publicadas',
   'Pedido directo por WhatsApp',
   'Cambios dentro de 4 días',
-  'Dos tiendas físicas en Gamarra',
+  'Dos tiendas físicas en Lima',
 ];

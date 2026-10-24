@@ -1,6 +1,6 @@
 import { WHATSAPP } from '../data/marca';
 
-export const metadata = { title: "Guia de tallas - SUMACK" };
+export const metadata = { title: "Guía de tallas - SUMACK" };
 
 const MEDIDAS = [
   { medida: 'Largo total', valores: [60, 63, 66, 69, 72] },

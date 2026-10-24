@@ -80,7 +80,7 @@ const RAZONES = [
   { t: 'Envíos a todo el Perú', d: 'Por Shalom sin recargo adicional. Olva, otras agencias o delivery en Lima según tu destino.' },
   { t: 'Te atiende una persona', d: 'Por WhatsApp, de lunes a sábado de 9:00 a 19:00. Resolvemos tallas, colores y envíos.' },
   { t: 'Cambios dentro de 4 días', d: 'Si la talla no fue la correcta, la cambiamos según nuestra política de cambios.' },
-  { t: 'Dos tiendas en Gamarra', d: 'Si estás en Lima, puedes ver las prendas en persona antes de decidir.' },
+  { t: 'Dos tiendas en Lima', d: 'Puedes visitarnos y ver las prendas en persona antes de decidir.' },
 ];
 
 // Reseñas reales; si aún no hay, en la PC (modo prueba) se ven las de ejemplo.
@@ -101,7 +101,7 @@ export default async function Home() {
             <Logo animado titulo="SUMACK" />
           </h1>
           <div className="hero-costura" aria-hidden="true" />
-          <p className="hero-frase">Polos de caballero, del corte a la última costura en Gamarra.</p>
+          <p className="hero-frase">Polos de caballero hechos con oficio, del corte a la última costura.</p>
           <p className="hero-sub">
             Diseñamos y confeccionamos nuestros propios modelos. Eliges color y talla,
             confirmas tu pedido por WhatsApp y lo enviamos a todo el Perú.

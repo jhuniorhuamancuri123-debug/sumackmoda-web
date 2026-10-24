@@ -75,7 +75,7 @@ export default function CatalogoPage() {
       <header className="wrap catalogo-cabecera">
         <div>
           <h1 className="t-display catalogo-titulo">Catálogo</h1>
-          <p className="catalogo-intro">Polos de caballero confeccionados en nuestro taller de Gamarra.</p>
+          <p className="catalogo-intro">Polos de caballero confeccionados en nuestro propio taller.</p>
         </div>
         <p className="catalogo-conteo" aria-live="polite">
           {loading ? 'Cargando modelos…' : `${productos.length} ${productos.length === 1 ? 'modelo disponible' : 'modelos disponibles'}${tallaFiltro ? ` en talla ${tallaFiltro}` : ''}`}
