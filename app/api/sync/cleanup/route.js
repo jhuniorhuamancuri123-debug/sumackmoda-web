@@ -1,6 +1,8 @@
-import { supabase } from '../../../lib/supabase';
+import { supabaseAdmin as supabase } from '../../../lib/supabaseAdmin';
+import { autorizadoInterno, noAutorizado } from '../../../lib/seguridad';
 
 export async function GET(request) {
+  if (!autorizadoInterno(request)) return noAutorizado();
   try {
     const { searchParams } = new URL(request.url);
     const session = searchParams.get('session');
