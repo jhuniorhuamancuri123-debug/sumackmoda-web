@@ -666,7 +666,7 @@ p { text-wrap: pretty; }
   --lh: max(100cqh, 100cqw * 941 / 1672);
   position: absolute; right: 0;
   width: var(--lw); height: var(--lh);
-  top: calc((100cqh - var(--lh)) * 0.3);
+  top: calc((100cqh - var(--lh)) * 0.45);
   background: url(/portada/mesa.webp) center / 100% 100% no-repeat;
 }
 /* Oscurece la izquierda para que el texto se lea */
@@ -677,15 +677,15 @@ p { text-wrap: pretty; }
 .hero-mesa .hero-texto { position: relative; z-index: 2; }
 
 .polaroid {
-  position: absolute; margin: 0; width: 11.2%;
+  position: absolute; margin: 0; width: 12.3%;
   transform: rotate(var(--r));
   animation: asienta-foto 1.4s var(--delay) cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 /* Posiciones en % de la foto de la mesa: libres de la libreta, lámpara, taza y reloj */
-.polaroid-1 { left: 54.5%; top: 26%; --lx: 130%; --ly: -45%; --oscuro: 0.42; }
-.polaroid-2 { left: 71.5%; top: 28.5%; --lx: 105%; --ly: -60%; --oscuro: 0.24; }
-.polaroid-3 { left: 57%; top: 58%; --lx: 150%; --ly: -110%; --oscuro: 0.5; }
-.polaroid-4 { left: 73.5%; top: 56%; --lx: 115%; --ly: -105%; --oscuro: 0.38; }
+.polaroid-1 { left: 53.5%; top: 21%;   --lx: 130%; --ly: -45%;  --oscuro: 0.42; }
+.polaroid-2 { left: 71%;   top: 25%;   --lx: 105%; --ly: -60%;  --oscuro: 0.24; }
+.polaroid-3 { left: 56%;   top: 51.5%; --lx: 150%; --ly: -110%; --oscuro: 0.5; }
+.polaroid-4 { left: 72.5%; top: 54.5%; --lx: 115%; --ly: -105%; --oscuro: 0.38; }
 
 /* La luz viene de la lámpara (arriba a la derecha): la sombra cae abajo a la izquierda */
 .polaroid-papel {
@@ -714,15 +714,22 @@ p { text-wrap: pretty; }
   background: radial-gradient(circle at var(--lx) var(--ly), rgba(255,200,120,0.28), transparent 70%);
   mix-blend-mode: soft-light;
 }
+/* Al pasar el mouse: la foto se levanta de la mesa, se endereza y se ilumina;
+   las demás se oscurecen un poco para que destaque */
+.polaroid-papel { transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease), filter 0.55s var(--ease); }
+.polaroid-papel::after { transition: opacity 0.55s var(--ease); }
 @media (hover: hover) and (pointer: fine) {
+  .polaroid { cursor: zoom-in; }
   .polaroid:hover { z-index: 10; }
   .polaroid:hover .polaroid-papel {
-    transform: translate(1px, -3px);
+    transform: translate(-6px, -16px) rotate(calc(var(--r) * -1)) scale(1.1);
     box-shadow:
-      -1px 1px 1px rgba(10,5,2,0.45),
-      -9px 12px 14px rgba(10,5,2,0.42),
-      -22px 28px 36px rgba(10,5,2,0.32);
+      -2px 3px 4px rgba(10,5,2,0.35),
+      -18px 26px 30px rgba(10,5,2,0.45),
+      -40px 56px 70px rgba(10,5,2,0.35);
   }
+  .polaroid:hover .polaroid-papel::after { opacity: 0.45; }
+  .mesa-lienzo:has(.polaroid:hover) .polaroid:not(:hover) .polaroid-papel { filter: brightness(0.72) saturate(0.85); }
 }
 /* Entrada sobria: la foto aparece y se asienta sobre la mesa, sin rebotes */
 @keyframes asienta-foto {
@@ -749,11 +756,11 @@ p { text-wrap: pretty; }
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 22%;
     background: linear-gradient(transparent, #1b120b); pointer-events: none;
   }
-  .polaroid { width: 13.5%; }
-  .polaroid-1 { left: 51%; top: 22%; }
-  .polaroid-2 { left: 70%; top: 25%; }
-  .polaroid-3 { left: 53%; top: 57%; }
-  .polaroid-4 { left: 71%; top: 55%; }
+  .polaroid { width: 14%; }
+  .polaroid-1 { left: 51%; top: 21%; }
+  .polaroid-2 { left: 70%; top: 24%; }
+  .polaroid-3 { left: 53%; top: 54%; }
+  .polaroid-4 { left: 70.5%; top: 56%; }
   .hero-mesa .hero-texto { padding-top: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
