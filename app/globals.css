@@ -768,7 +768,7 @@ p { text-wrap: pretty; }
 .ficha-grid {
   display: grid;
   /* La foto conserva su ancho; las columnas laterales se van hacia los bordes */
-  grid-template-columns: minmax(240px, 1fr) minmax(0, 520px) minmax(300px, 1fr);
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 470px) minmax(300px, 1fr);
   grid-template-areas: "izq gal compra";
   column-gap: clamp(2rem, 6vw, 9rem);
   align-items: start;
@@ -783,7 +783,7 @@ p { text-wrap: pretty; }
 /* Foto: proporción 4:5, alto limitado a la pantalla, fondo limpio */
 .ficha-foto {
   aspect-ratio: 4 / 5;
-  width: min(100%, calc((100svh - var(--nav-h) - 6rem) * 0.8));
+  width: min(100%, calc((100svh - var(--nav-h) - 10rem) * 0.8));
   max-height: none;
   margin: 0 auto;
   background: #ebe8e3;
@@ -855,3 +855,15 @@ p { text-wrap: pretty; }
 .resena-wa blockquote { font-size: 0.98rem; line-height: 1.5; margin: 0; }
 .resena-wa figcaption { font-size: 0.82rem; color: var(--gris-texto); }
 .resena-wa figcaption strong { color: var(--carbon); font-weight: 600; }
+
+/* Flechas de foto fuera de la imagen (PC; en tablet y celular van dentro) */
+@media (min-width: 1101px) {
+  .ficha-foto { overflow: visible; }
+  .ficha-flecha {
+    background: transparent; border: 1px solid var(--hilo); width: 40px; height: 40px; margin-top: -20px;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .ficha-flecha:hover { background: var(--carbon); color: var(--papel); border-color: var(--carbon); }
+  .ficha-flecha.izq { left: -58px; }
+  .ficha-flecha.der { right: -58px; }
+}
