@@ -65,12 +65,12 @@ async function getProductosDestacados() {
     }));
 }
 
-// Portada: fotos tipo polaroid que caen sobre la mesa (en public/portada/)
+// Portada: fotos tipo polaroid apoyadas sobre la mesa (en public/portada/)
 const POLAROIDS = [
-  { src: '/portada/foto-cama.webp', giro: '-5deg', desde: '0px' },
-  { src: '/portada/foto-ascensor.webp', giro: '3deg', desde: '0px' },
-  { src: '/portada/foto-bicolor.webp', giro: '4deg', desde: '0px' },
-  { src: '/portada/foto-doblados.webp', giro: '-4deg', desde: '0px' },
+  { src: '/portada/foto-cama.webp', giro: '-5deg' },
+  { src: '/portada/foto-ascensor.webp', giro: '4deg' },
+  { src: '/portada/foto-bicolor.webp', giro: '3deg' },
+  { src: '/portada/foto-doblados.webp', giro: '-3deg' },
 ];
 
 const RAZONES = [
@@ -105,18 +105,23 @@ export default async function Home() {
             <Link href="/guia-de-tallas" className="btn btn-linea">Encontrar mi talla</Link>
           </div>
         </div>
-        <div className="mesa-fotos" role="img" aria-label="Fotos de polos SUMACK sobre una mesa de madera">
-          {POLAROIDS.map((f, i) => (
-            <figure
-              key={f.src}
-              className={`polaroid polaroid-${i + 1}`}
-              style={{ '--r': f.giro, '--delay': `${0.5 + i * 0.18}s`, '--desde': f.desde }}
-            >
-              <div className="polaroid-papel">
-                <img src={f.src} alt="" width="700" height="875" fetchPriority={i < 2 ? 'high' : 'auto'} />
-              </div>
-            </figure>
-          ))}
+        {/* La mesa es un "lienzo" con la proporción exacta de la foto de fondo:
+            las polaroids se ubican en % de ese lienzo, así nunca tapan la lámpara,
+            la libreta, la taza ni el reloj, en ninguna pantalla. */}
+        <div className="mesa-escena" role="img" aria-label="Fotos de polos SUMACK sobre una mesa de madera">
+          <div className="mesa-lienzo">
+            {POLAROIDS.map((f, i) => (
+              <figure
+                key={f.src}
+                className={`polaroid polaroid-${i + 1}`}
+                style={{ '--r': f.giro, '--delay': `${0.5 + i * 0.18}s` }}
+              >
+                <div className="polaroid-papel">
+                  <img src={f.src} alt="" width="700" height="875" fetchPriority={i < 2 ? 'high' : 'auto'} />
+                </div>
+              </figure>
+            ))}
+          </div>
         </div>
       </section>
 
