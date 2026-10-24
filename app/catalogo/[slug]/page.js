@@ -509,91 +509,102 @@ import { AnimatePresence, motion } from 'motion/react';
               )}
             </div>
 
-            {/* INFORMACIÓN */}
-            <div className="ficha-info">
+            {/* COLUMNA IZQUIERDA: nombre, descripción, envíos y cambios */}
+            <div className="ficha-col-izq">
+            {/* IZQUIERDA (arriba): nombre del modelo */}
+            <header className="ficha-cab">
               <p className="ficha-codigo">Modelo {codModelo}</p>
               <h1 className="t-display ficha-nombre">{nombreModelo.toLowerCase()}</h1>
-              <p className="ficha-precio">
-                {hayMultiplesPrecios && !tallaSeleccionada && <small>Desde</small>}
-                S/ {Number(precioActual).toFixed(2)}
-              </p>
-              {hayMultiplesPrecios && (
-                <p className="ficha-precio-nota">
-                  {tallaSeleccionada ? `Precio de la talla ${tallaSeleccionada}. Varía según la talla.` : 'El precio varía según la talla.'}
+            </header>
+
+            {/* IZQUIERDA: descripción, envíos y cambios */}
+            <div className="ficha-col-info">
+                {descripcion && <p className="ficha-desc">{descripcion}</p>}
+
+                <div className="ficha-detalles">
+                  <details open>
+                    <summary>Envíos</summary>
+                    <div className="det-cuerpo">
+                      <p><strong>Shalom:</strong> sin recargo adicional.</p>
+                      <p><strong>Olva, otras agencias o delivery en Lima:</strong> recargo variable según destino.</p>
+                      <p className="t-meta">El envío se coordina al confirmar tu pedido por WhatsApp.</p>
+                    </div>
+                  </details>
+                  <details>
+                    <summary>Cambios</summary>
+                    <div className="det-cuerpo">
+                      <p>Aceptamos cambios dentro de los 4 días calendario desde que recibes tu pedido, con la prenda sin uso y con etiquetas.</p>
+                      <p><Link href="/politica-devoluciones" className="link-subrayado" style={{ fontWeight: 500 }}>Leer la política completa</Link></p>
+                    </div>
+                  </details>
+                  <details>
+                    <summary>Cómo comprar</summary>
+                    <div className="det-cuerpo">
+                      <p>1. Elige color y talla y agrega al carrito.</p>
+                      <p>2. Escribe tu nombre y confirma el pedido.</p>
+                      <p>3. Se abre WhatsApp con tu pedido listo; coordinamos pago y envío contigo.</p>
+                    </div>
+                  </details>
+                </div>
+              <a href={linkWA} target="_blank" rel="noopener" className="ficha-wa">
+                <IconoWA /> ¿Dudas con tu talla? Consúltanos por WhatsApp
+              </a>
+            </div>
+            </div>
+
+            {/* DERECHA: precio, color, talla y compra */}
+            <div className="ficha-col-compra">
+                <p className="ficha-precio">
+                  {hayMultiplesPrecios && !tallaSeleccionada && <small>Desde</small>}
+                  S/ {Number(precioActual).toFixed(2)}
                 </p>
-              )}
-              {descripcion && <p className="ficha-desc">{descripcion}</p>}
-
-              <div className="ficha-bloque">
-                <div className="ficha-bloque-cab">
-                  <span>Color: <strong style={{ textTransform: 'capitalize' }}>{colorActual?.nombre_color?.toLowerCase() || ''}</strong></span>
-                  {colores.length > 1 && <span className="t-meta">{colores.length} colores</span>}
-                </div>
-                <div className="colores-opciones">
-                  {colores.map((c, i) => (
-                    <button key={c.cod_color} className={`color-opcion ${colorIndex === i ? 'sel' : ''}`} aria-pressed={colorIndex === i} onClick={() => setColorIndex(i)}>
-                      {c.nombre_color.toLowerCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="ficha-bloque">
-                <div className="ficha-bloque-cab">
-                  <span>Talla{tallaSeleccionada && <>: <strong>{tallaSeleccionada}</strong></>}</span>
-                  <Link href="/guia-de-tallas" className="link-subrayado" style={{ fontWeight: 500 }}>Guía de tallas</Link>
-                </div>
-                <div className="tallas-opciones">
-                  {tallasInfo.map(({ talla, disponible, precio }) => (
-                    <button key={talla}
-                      className={`talla-opcion ${tallaSeleccionada === talla ? 'sel' : ''}`}
-                      onClick={() => disponible && setTallaSeleccionada(talla)}
-                      disabled={!disponible}
-                      aria-pressed={tallaSeleccionada === talla}
-                      aria-label={disponible ? `Talla ${talla}, S/ ${Number(precio).toFixed(2)}` : `Talla ${talla}, agotada`}
-                    >
-                      {talla}
-                      {hayMultiplesPrecios && disponible && <small>S/ {Number(precio).toFixed(0)}</small>}
-                    </button>
-                  ))}
-                </div>
-                {tallasInfo.length > 0 && tallasInfo.every(t => !t.disponible) && (
-                  <p className="ficha-agotado">Agotado en este color. Elige otro color.</p>
+                {hayMultiplesPrecios && (
+                  <p className="ficha-precio-nota">
+                    {tallaSeleccionada ? `Precio de la talla ${tallaSeleccionada}. Varía según la talla.` : 'El precio varía según la talla.'}
+                  </p>
                 )}
-              </div>
+                <div className="ficha-bloque">
+                  <div className="ficha-bloque-cab">
+                    <span>Color: <strong style={{ textTransform: 'capitalize' }}>{colorActual?.nombre_color?.toLowerCase() || ''}</strong></span>
+                    {colores.length > 1 && <span className="t-meta">{colores.length} colores</span>}
+                  </div>
+                  <div className="colores-opciones">
+                    {colores.map((c, i) => (
+                      <button key={c.cod_color} className={`color-opcion ${colorIndex === i ? 'sel' : ''}`} aria-pressed={colorIndex === i} onClick={() => setColorIndex(i)}>
+                        {c.nombre_color.toLowerCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="ficha-acciones">
-                {botonAgregar('btn-agregar-desk')}
-                <a href={linkWA} target="_blank" rel="noopener" className="btn btn-linea btn-full">
-                  <IconoWA /> Consultar por WhatsApp
-                </a>
-              </div>
+                <div className="ficha-bloque">
+                  <div className="ficha-bloque-cab">
+                    <span>Talla{tallaSeleccionada && <>: <strong>{tallaSeleccionada}</strong></>}</span>
+                    <Link href="/guia-de-tallas" className="link-subrayado" style={{ fontWeight: 500 }}>Guía de tallas</Link>
+                  </div>
+                  <div className="tallas-opciones">
+                    {tallasInfo.map(({ talla, disponible, precio }) => (
+                      <button key={talla}
+                        className={`talla-opcion ${tallaSeleccionada === talla ? 'sel' : ''}`}
+                        onClick={() => disponible && setTallaSeleccionada(talla)}
+                        disabled={!disponible}
+                        aria-pressed={tallaSeleccionada === talla}
+                        aria-label={disponible ? `Talla ${talla}, S/ ${Number(precio).toFixed(2)}` : `Talla ${talla}, agotada`}
+                      >
+                        {talla}
+                        {hayMultiplesPrecios && disponible && <small>S/ {Number(precio).toFixed(0)}</small>}
+                      </button>
+                    ))}
+                  </div>
+                  {tallasInfo.length > 0 && tallasInfo.every(t => !t.disponible) && (
+                    <p className="ficha-agotado">Agotado en este color. Elige otro color.</p>
+                  )}
+                </div>
 
-              <div className="ficha-detalles" style={{ marginTop: '2rem' }}>
-                <details open>
-                  <summary>Envíos</summary>
-                  <div className="det-cuerpo">
-                    <p><strong>Shalom:</strong> sin recargo adicional.</p>
-                    <p><strong>Olva, otras agencias o delivery en Lima:</strong> recargo variable según destino.</p>
-                    <p className="t-meta">El envío se coordina al confirmar tu pedido por WhatsApp.</p>
-                  </div>
-                </details>
-                <details>
-                  <summary>Cambios</summary>
-                  <div className="det-cuerpo">
-                    <p>Aceptamos cambios dentro de los 4 días calendario desde que recibes tu pedido, con la prenda sin uso y con etiquetas.</p>
-                    <p><Link href="/politica-devoluciones" className="link-subrayado" style={{ fontWeight: 500 }}>Leer la política completa</Link></p>
-                  </div>
-                </details>
-                <details>
-                  <summary>Cómo comprar</summary>
-                  <div className="det-cuerpo">
-                    <p>1. Elige color y talla y agrega al carrito.</p>
-                    <p>2. Escribe tu nombre y confirma el pedido.</p>
-                    <p>3. Se abre WhatsApp con tu pedido listo; coordinamos pago y envío contigo.</p>
-                  </div>
-                </details>
-              </div>
+                <div className="ficha-acciones">
+                  {botonAgregar('btn-agregar-desk')}
+                </div>
+
             </div>
           </div>
         </div>
