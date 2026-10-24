@@ -88,26 +88,45 @@ export async function GET(request) {
     }
 
     // Guardar modelos y colores
+    // Cada guardado se revisa: si Supabase lo rechaza, la sincronización falla
+    // con un mensaje claro (antes fallaba en silencio y respondía "success").
+    const errores = [];
+
     if (Object.keys(modelosMap).length > 0) {
-      await supabase.from('modelos').upsert(
+      const { error } = await supabase.from('modelos').upsert(
         Object.values(modelosMap),
         { onConflict: 'cod_modelo' }
       );
+      if (error) errores.push(`modelos: ${error.message}`);
     }
 
     if (Object.keys(coloresMap).length > 0) {
-      await supabase.from('colores').upsert(
+      const { error } = await supabase.from('colores').upsert(
         Object.values(coloresMap),
         { onConflict: 'cod_color' }
       );
+      if (error) errores.push(`colores: ${error.message}`);
     }
 
     // Guardar productos
     if (productosData.length > 0) {
-      await supabase.from('productos').upsert(
+      const { error } = await supabase.from('productos').upsert(
         productosData,
         { onConflict: 'id' }
       );
+      if (error) errores.push(`productos: ${error.message}`);
+    }
+
+    if (errores.length > 0) {
+      const sinClave = !process.env.SUPABASE_SERVICE_ROLE_KEY;
+      console.error('Error guardando en Supabase:', errores);
+      return Response.json({
+        success: false,
+        error: 'No se pudo guardar en Supabase: ' + errores.join(' | '),
+        pista: sinClave
+          ? 'Falta la variable SUPABASE_SERVICE_ROLE_KEY en Vercel (y hacer Redeploy).'
+          : 'Revisa que SUPABASE_SERVICE_ROLE_KEY sea la clave service_role/secret correcta.',
+      }, { status: 500 });
     }
 
     console.log(`Página ${startPage} completada. Items procesados: ${totalFetched}`);
