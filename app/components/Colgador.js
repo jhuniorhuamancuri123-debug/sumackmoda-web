@@ -1,5 +1,5 @@
 'use client';
-// Colgador de categorías: las prendas cuelgan de perfil y giran de frente
+// Colgador de categorías: las prendas cuelgan de perfil del tubo de la foto y giran de frente
 // al pasar el mouse (computadora) o una por una, solas, en celular.
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -19,7 +19,6 @@ export default function Colgador() {
   const [visible, setVisible] = useState(false);
   const [pausado, setPausado] = useState(false);
   const riel = useRef(null);
-  const items = useRef([]);
 
   // ¿Pantalla táctil (sin mouse)?
   useEffect(() => {
@@ -54,18 +53,6 @@ export default function Colgador() {
     return () => clearTimeout(t);
   }, [pausado, activo]);
 
-  // Si hay más prendas que pantalla, centra la que está de frente
-  useEffect(() => {
-    if (!tactil || activo < 0) return;
-    const r = riel.current, it = items.current[activo];
-    if (!r || !it) return;
-    const t = setTimeout(() => {
-      if (r.scrollWidth <= r.clientWidth + 4) return; // todo cabe: no se desplaza
-      r.scrollTo({ left: it.offsetLeft - (r.clientWidth - it.offsetWidth) / 2, behavior: 'smooth' });
-    }, 800);
-    return () => clearTimeout(t);
-  }, [activo, tactil]);
-
   return (
     <section className="seccion colgador" aria-labelledby="colgador-titulo">
       <div className="wrap">
@@ -78,13 +65,15 @@ export default function Colgador() {
         </div>
       </div>
 
-      <div className="colgador-riel" ref={riel} onMouseLeave={() => !tactil && setActivo(-1)}>
-        <div className={`colgador-tubo ${activo >= 0 ? 'hay-activo' : ''}`} style={{ '--n': PRENDAS.length }}>
+      {/* Ambiente: pared con tubo negro. Las prendas cuelgan del tubo de la foto. */}
+      <div className="colg-escena">
+       <div className="colg-lienzo">
+        <div className="colgador-tubo" ref={riel} style={{ '--n': PRENDAS.length }}
+          onMouseLeave={() => !tactil && setActivo(-1)}>
           {PRENDAS.map((p, i) => (
             <Link
               key={p.slug}
               href={`/catalogo?categoria=${p.slug}`}
-              ref={el => (items.current[i] = el)}
               className={`percha ${activo === i ? 'activa' : ''}`}
               style={{ '--i': i }}
               onMouseEnter={() => !tactil && setActivo(i)}
@@ -104,6 +93,7 @@ export default function Colgador() {
             </Link>
           ))}
         </div>
+       </div>
       </div>
       <div className="colgador-puntos" role="group" aria-label="Elegir categoría">
         {PRENDAS.map((p, i) => (

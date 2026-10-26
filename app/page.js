@@ -145,7 +145,7 @@ export default async function Home() {
 
       {/* SELECCIÓN */}
       {destacados.length > 0 && (
-        <section className="seccion">
+        <section className="seccion seccion-lino">
           <div className="wrap">
             <div className="seccion-header">
               <div>

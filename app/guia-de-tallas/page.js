@@ -18,7 +18,7 @@ export default function GuiaTallasPage() {
           Medidas en centímetros, tomadas sobre la prenda extendida. Mide el pecho de un polo
           que te quede bien y compáralo con la tabla.
         </p>
-        <img src="/guia-tallas.jpg" alt="Cómo medir largo, pecho y manga de un polo SUMACK" className="guia-img" />
+        <img src="/guia-tallas.webp" alt="Cómo medir largo, pecho y manga de un polo SUMACK" className="guia-img" />
         <div className="tabla-wrap">
           <table className="tabla-tallas">
             <thead>

@@ -877,26 +877,38 @@ p { text-wrap: pretty; }
 
 /* ============================================================
    Colgador de categorías (inicio)
-   Las prendas cuelgan de perfil; la activa gira de frente.
+   Foto de ambiente (pared + tubo negro). Las prendas cuelgan del tubo
+   de perfil; la activa gira de frente. Medidas en % de la foto (cqw/cqh).
    ============================================================ */
-.colgador { --alto: 440px; --ancho-img: calc(var(--alto) * 658 / 900); --w: 132px; --w-activa: 336px;
-  background: linear-gradient(180deg, var(--papel) 0%, #efede8 100%); overflow: hidden; }
-.colgador-riel { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 0.5rem 0 0.5rem; }
-.colgador-riel::-webkit-scrollbar { display: none; }
-.colgador-tubo {
-  --pad: 56px; position: relative; display: flex; justify-content: center; width: max-content; margin: 0 auto; padding: 0 var(--pad);
-  /* largo fijo del tubo: no cambia cuando una prenda gira */
-  min-width: calc(var(--n) * var(--w) + var(--w-activa) - var(--w) + 2 * var(--pad));
+:root { --lino: #ebe5dd; }  /* tono cálido que une el colgador con la sección siguiente */
+.colgador { background: var(--lino); padding-bottom: 0; }
+.colgador .seccion-header { margin-bottom: clamp(1.25rem, 2.5vw, 2rem); }
+.colg-escena {
+  position: relative; overflow: hidden; container-type: size;
+  height: min(66.7vw, 860px);
 }
-/* el tubo metálico, a la altura de los ganchos */
-.colgador-tubo::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 13px; height: 6px; border-radius: 6px; z-index: 0;
-  background: linear-gradient(180deg, #d9d7d2 0%, #a9a59d 45%, #8c887f 60%, #c9c6bf 100%);
-  box-shadow: 0 6px 10px -4px rgba(23,24,26,0.25);
+/* fundidos: arriba hacia el tono de la sección, abajo hacia la sección siguiente */
+.colg-escena::before, .colg-escena::after { content: ''; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none; }
+.colg-escena::before { top: 0; height: 9%; background: linear-gradient(var(--lino), transparent); }
+.colg-escena::after { bottom: 0; height: 16%; background: linear-gradient(transparent, var(--lino)); }
+.colg-lienzo {
+  --lw: max(100cqw, calc(100cqh * 1536 / 1024));
+  --lh: calc(var(--lw) * 1024 / 1536);
+  position: absolute; width: var(--lw); height: var(--lh);
+  left: calc((100cqw - var(--lw)) / 2); top: calc((100cqh - var(--lh)) * 0.3);
+  background: url('/colgador/ambiente.webp') center / 100% 100% no-repeat;
+  container-type: size;
+}
+/* El tubo de la foto va de x≈15% a x≈85%; su borde superior está a y≈17% */
+.colgador-tubo {
+  --alto: 50cqh; --w-activa: 37cqh;
+  --w: min(16cqh, calc((66cqw - var(--w-activa)) / (var(--n) - 1)));
+  position: absolute; left: 15%; width: 70%; top: 16.3%;
+  display: flex; justify-content: center; z-index: 2;
 }
 .percha {
-  position: relative; z-index: 1; flex: 0 0 auto; display: block;
-  width: var(--w); height: calc(var(--alto) + 84px);
+  position: relative; flex: 0 0 auto; display: block;
+  width: var(--w); height: calc(var(--alto) + 12cqh);
   perspective: 1100px; color: inherit; text-decoration: none;
   transition: width 0.75s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -904,58 +916,58 @@ p { text-wrap: pretty; }
 .percha:focus-visible { outline: none; }
 .percha:focus-visible .percha-nombre { outline: 1px solid var(--carbon); outline-offset: 4px; }
 .percha-fig {
-  position: absolute; top: 0; left: 50%; width: var(--ancho-img); height: var(--alto);
-  transform: translateX(-50%); transform-origin: 50% 2%; pointer-events: none;
-  filter: drop-shadow(0 16px 14px rgba(23,24,26,0.13));
-  transition: opacity 0.5s ease;
+  position: absolute; top: 0; left: 50%; width: calc(var(--alto) * 658 / 900); height: var(--alto);
+  transform: translateX(-50%); pointer-events: none;
+  /* luz de la ventana (izquierda): sombra suave hacia la derecha sobre la pared */
+  filter: drop-shadow(1.1cqh 1.5cqh 1.3cqh rgba(48, 30, 16, 0.36));
 }
 .percha-fig img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
   backface-visibility: hidden; user-select: none;
+  /* misma luz cálida del ambiente para todas (no cambia al pasar el cursor) */
+  filter: brightness(0.93) sepia(0.07) contrast(1.02);
   transition: transform 0.75s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.45s ease;
 }
 .percha-perfil { transform: rotateY(0deg); opacity: 1; }
 .percha-frente { transform: rotateY(-78deg) scale(0.96); opacity: 0; }
 .percha.activa .percha-perfil { transform: rotateY(78deg); opacity: 0; }
 .percha.activa .percha-frente { transform: rotateY(0deg) scale(1); opacity: 1; transition-delay: 0.08s; }
-.percha.activa .percha-fig { animation: columpio 1.3s cubic-bezier(0.3, 0.6, 0.35, 1) both; }
-.hay-activo .percha:not(.activa) .percha-fig { opacity: 0.72; }
-@keyframes columpio {
-  0% { rotate: 0deg; } 28% { rotate: 1.8deg; } 58% { rotate: -1.1deg; } 82% { rotate: 0.4deg; } 100% { rotate: 0deg; }
-}
 .percha-nombre, .percha-ver {
   position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;
 }
 .percha-nombre {
-  top: calc(var(--alto) + 22px);
-  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gris-texto);
+  top: calc(var(--alto) + 2.4cqh);
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(23, 24, 26, 0.68);
   transition: color 0.4s ease, letter-spacing 0.5s ease;
 }
 .percha.activa .percha-nombre { color: var(--carbon); font-weight: 600; letter-spacing: 0.18em; }
 .percha-ver {
-  top: calc(var(--alto) + 46px); font-size: 0.86rem; color: var(--tabaco);
+  top: calc(var(--alto) + 2.4cqh + 1.6rem); font-size: 0.86rem; color: var(--carbon);
   border-bottom: 1px solid currentColor; padding-bottom: 1px;
   opacity: 0; transform: translate(-50%, 6px); transition: opacity 0.4s ease, transform 0.5s ease;
 }
 .percha.activa .percha-ver { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.2s; }
 
 /* puntos de avance (sólo celular) */
-.colgador-puntos { display: none; justify-content: center; gap: 0.55rem; margin-top: 0.4rem; }
+.colgador-puntos { display: none; justify-content: center; gap: 0.55rem; padding: 0.2rem 0 0.4rem; position: relative; z-index: 4; margin-top: -0.6rem; }
 .colgador-puntos button { width: 22px; height: 22px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
-.colgador-puntos span { width: 6px; height: 6px; border-radius: 50%; background: var(--hilo); transition: background 0.3s ease, transform 0.3s ease; }
+.colgador-puntos span { width: 6px; height: 6px; border-radius: 50%; background: rgba(23, 24, 26, 0.22); transition: background 0.3s ease, transform 0.3s ease; }
 .colgador-puntos button[aria-current="true"] span { background: var(--tabaco); transform: scale(1.35); }
+
+/* La sección que sigue continúa el mismo tono */
+.seccion-lino { background: var(--lino); padding-top: clamp(2.5rem, 5vw, 4rem); }
+
 @media (max-width: 700px) {
-  .colgador { --alto: 290px; --w: 74px; --w-activa: 196px; }
-  .colgador-tubo { --pad: 14px; }
-  .colgador-tubo::before { top: 8px; height: 5px; }
+  .colg-escena { height: 132vw; }
+  .colgador-tubo { --w-activa: 39cqh; }
   .percha-nombre { font-size: 0.68rem; letter-spacing: 0.12em; opacity: 0; transition: opacity 0.4s ease; }
   .percha.activa .percha-nombre { opacity: 1; }
+  .percha-ver { font-size: 0.82rem; }
   .colgador-puntos { display: flex; }
   .colgador-cabecera .link-subrayado { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .percha, .percha-fig img { transition-duration: 0.01s; }
-  .percha.activa .percha-fig { animation: none; }
 }
 
 /* Pestañas de categorías (catálogo) */
