@@ -886,29 +886,28 @@ p { text-wrap: pretty; }
 .colg-escena {
   position: relative; overflow: hidden; container-type: size;
   /* entra completa en la pantalla (menos el menú) */
-  height: min(62vw, 840px, calc(100svh - 72px));
+  height: min(62vw, calc(100svh - 72px));
 }
 /* fundidos: arriba hacia el tono de la sección, abajo hacia la sección siguiente */
 .colg-escena::before, .colg-escena::after { content: ''; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none; }
-.colg-escena::before { top: 0; height: 9%; background: linear-gradient(var(--lino), transparent); }
-.colg-escena::after { bottom: 0; height: 8%; background: linear-gradient(transparent, var(--lino)); }
+.colg-escena::before { top: 0; height: 6%; background: linear-gradient(var(--lino), transparent); }
+.colg-escena::after { bottom: 0; height: 5%; background: linear-gradient(transparent, var(--lino)); }
 .colg-lienzo {
   /* computadora: foto 1672×941 (--ar = ancho/alto). En celular se usa otra más ancha (ver abajo) */
   --ar: 1.7768;
-  /* en pantallas anchas el ambiente no crece más de 1500px: el tubo no se vuelve enorme */
-  --lw: max(calc(100cqh * var(--ar)), min(100cqw, 1500px, calc(100cqh * var(--ar) * 1.1)));
+  /* ocupa siempre todo el ancho de la pantalla, sin bordes a los lados */
+  --lw: max(calc(100cqh * var(--ar)), 100cqw);
   --lh: calc(var(--lw) / var(--ar));
   position: absolute; width: var(--lw); height: var(--lh);
-  left: calc((100cqw - var(--lw)) / 2); top: calc((100cqh - var(--lh)) * 0.5);
+  left: calc((100cqw - var(--lw)) / 2);
+  /* encuadre: el tubo (≈17-20% de la foto) queda justo bajo el fundido superior */
+  top: min(0px, max(calc(100cqh - var(--lh)), calc(6cqh - var(--lh) * 0.17)));
   background: url('/colgador/ambiente-pc.webp') center / 100% 100% no-repeat;
   container-type: size;
-  /* bordes laterales fundidos con el tono de la sección */
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
 }
 /* Computadora: el tubo de la foto va de x≈23% a x≈77%; su borde superior está a y≈19.8% */
 .colgador-tubo {
-  --alto: 58cqh; --w-activa: 43cqh;
+  --alto: 56cqh; --w-activa: 42cqh;
   /* espacio de cada prenda de perfil: nunca menos que lo que ocupa su nombre */
   --w: min(max(19cqh, 9.6rem), calc((52cqw - var(--w-activa)) / (var(--n) - 1)));
   position: absolute; left: 23%; width: 54%; top: 19.2%;
@@ -952,7 +951,7 @@ p { text-wrap: pretty; }
 }
 .percha.activa .percha-nombre { color: var(--papel); background: var(--carbon); }
 .percha-ver {
-  top: calc(var(--alto) + 2.4cqh + 2.5rem); font-size: 0.88rem; font-weight: 600; color: var(--carbon);
+  top: calc(var(--alto) + 2.4cqh + 2.25rem); font-size: 0.88rem; font-weight: 600; color: var(--carbon);
   border-bottom: 1px solid currentColor; padding-bottom: 1px;
   opacity: 0; transform: translate(-50%, 6px); transition: opacity 0.4s ease, transform 0.5s ease;
 }
