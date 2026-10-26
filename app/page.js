@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase';
 import ProductoCard from './components/ProductoCard';
 import Logo from './components/Logo';
 import Proceso from './components/Proceso';
+import Colgador from './components/Colgador';
 import { IconoWA } from './components/SiteFooter';
 import { RESENAS } from './data/resenas';
 import { RESENAS_EJEMPLO } from './data/resenas-ejemplo';
@@ -138,6 +139,9 @@ export default async function Home() {
           {cinta.map((g, i) => <span key={i} className="cinta-item">{g}</span>)}
         </div>
       </div>
+
+      {/* COLGADOR DE CATEGORÍAS */}
+      <Colgador />
 
       {/* SELECCIÓN */}
       {destacados.length > 0 && (

@@ -874,3 +874,111 @@ p { text-wrap: pretty; }
   .ficha-flecha.izq { left: -58px; }
   .ficha-flecha.der { right: -58px; }
 }
+
+/* ============================================================
+   Colgador de categorías (inicio)
+   Las prendas cuelgan de perfil; la activa gira de frente.
+   ============================================================ */
+.colgador { --alto: 440px; --ancho-img: calc(var(--alto) * 658 / 900); --w: 132px; --w-activa: 336px;
+  background: linear-gradient(180deg, var(--papel) 0%, #efede8 100%); overflow: hidden; }
+.colgador-riel { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 0.5rem 0 0.5rem; }
+.colgador-riel::-webkit-scrollbar { display: none; }
+.colgador-tubo {
+  --pad: 56px; position: relative; display: flex; justify-content: center; width: max-content; margin: 0 auto; padding: 0 var(--pad);
+  /* largo fijo del tubo: no cambia cuando una prenda gira */
+  min-width: calc(var(--n) * var(--w) + var(--w-activa) - var(--w) + 2 * var(--pad));
+}
+/* el tubo metálico, a la altura de los ganchos */
+.colgador-tubo::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 13px; height: 6px; border-radius: 6px; z-index: 0;
+  background: linear-gradient(180deg, #d9d7d2 0%, #a9a59d 45%, #8c887f 60%, #c9c6bf 100%);
+  box-shadow: 0 6px 10px -4px rgba(23,24,26,0.25);
+}
+.percha {
+  position: relative; z-index: 1; flex: 0 0 auto; display: block;
+  width: var(--w); height: calc(var(--alto) + 84px);
+  perspective: 1100px; color: inherit; text-decoration: none;
+  transition: width 0.75s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.percha.activa { width: var(--w-activa); }
+.percha:focus-visible { outline: none; }
+.percha:focus-visible .percha-nombre { outline: 1px solid var(--carbon); outline-offset: 4px; }
+.percha-fig {
+  position: absolute; top: 0; left: 50%; width: var(--ancho-img); height: var(--alto);
+  transform: translateX(-50%); transform-origin: 50% 2%; pointer-events: none;
+  filter: drop-shadow(0 16px 14px rgba(23,24,26,0.13));
+  transition: opacity 0.5s ease;
+}
+.percha-fig img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+  backface-visibility: hidden; user-select: none;
+  transition: transform 0.75s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.45s ease;
+}
+.percha-perfil { transform: rotateY(0deg); opacity: 1; }
+.percha-frente { transform: rotateY(-78deg) scale(0.96); opacity: 0; }
+.percha.activa .percha-perfil { transform: rotateY(78deg); opacity: 0; }
+.percha.activa .percha-frente { transform: rotateY(0deg) scale(1); opacity: 1; transition-delay: 0.08s; }
+.percha.activa .percha-fig { animation: columpio 1.3s cubic-bezier(0.3, 0.6, 0.35, 1) both; }
+.hay-activo .percha:not(.activa) .percha-fig { opacity: 0.72; }
+@keyframes columpio {
+  0% { rotate: 0deg; } 28% { rotate: 1.8deg; } 58% { rotate: -1.1deg; } 82% { rotate: 0.4deg; } 100% { rotate: 0deg; }
+}
+.percha-nombre, .percha-ver {
+  position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;
+}
+.percha-nombre {
+  top: calc(var(--alto) + 22px);
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gris-texto);
+  transition: color 0.4s ease, letter-spacing 0.5s ease;
+}
+.percha.activa .percha-nombre { color: var(--carbon); font-weight: 600; letter-spacing: 0.18em; }
+.percha-ver {
+  top: calc(var(--alto) + 46px); font-size: 0.86rem; color: var(--tabaco);
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  opacity: 0; transform: translate(-50%, 6px); transition: opacity 0.4s ease, transform 0.5s ease;
+}
+.percha.activa .percha-ver { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.2s; }
+
+/* puntos de avance (sólo celular) */
+.colgador-puntos { display: none; justify-content: center; gap: 0.55rem; margin-top: 0.4rem; }
+.colgador-puntos button { width: 22px; height: 22px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
+.colgador-puntos span { width: 6px; height: 6px; border-radius: 50%; background: var(--hilo); transition: background 0.3s ease, transform 0.3s ease; }
+.colgador-puntos button[aria-current="true"] span { background: var(--tabaco); transform: scale(1.35); }
+@media (max-width: 700px) {
+  .colgador { --alto: 290px; --w: 74px; --w-activa: 196px; }
+  .colgador-tubo { --pad: 14px; }
+  .colgador-tubo::before { top: 8px; height: 5px; }
+  .percha-nombre { font-size: 0.68rem; letter-spacing: 0.12em; opacity: 0; transition: opacity 0.4s ease; }
+  .percha.activa .percha-nombre { opacity: 1; }
+  .colgador-puntos { display: flex; }
+  .colgador-cabecera .link-subrayado { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .percha, .percha-fig img { transition-duration: 0.01s; }
+  .percha.activa .percha-fig { animation: none; }
+}
+
+/* Pestañas de categorías (catálogo) */
+.categorias-tabs {
+  display: flex; gap: clamp(1.1rem, 2.6vw, 2.2rem); overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--hilo);
+}
+.categorias-tabs::-webkit-scrollbar { display: none; }
+.categoria-tab {
+  position: relative; flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.35rem;
+  padding: 1rem 0 0.9rem; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 0.92rem; color: var(--gris-texto); white-space: nowrap;
+  transition: color 0.25s ease;
+}
+.categoria-tab:hover { color: var(--carbon); }
+.categoria-tab::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--carbon);
+  transform: scaleX(0); transform-origin: left; transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.categoria-tab.activa { color: var(--carbon); font-weight: 600; }
+.categoria-tab.activa::after { transform: scaleX(1); }
+.categoria-tab-n { font-size: 0.72rem; font-weight: 400; color: var(--gris-texto); font-variant-numeric: tabular-nums; }
+.categoria-tab:focus-visible { outline: 1px solid var(--carbon); outline-offset: 2px; }
+@media (max-width: 700px) {
+  .categoria-tab { font-size: 0.88rem; padding: 0.85rem 0 0.75rem; }
+}

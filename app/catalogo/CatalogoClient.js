@@ -1,8 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 import ProductoCard from '../components/ProductoCard';
+import { CATEGORIAS, categoriasDe, nombreCategoria } from '../data/categorias';
 
 const TALLAS = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -10,6 +12,30 @@ export default function CatalogoPage() {
   const [productos, setProductos] = useState([]);
   const [tallaFiltro, setTallaFiltro] = useState('S');
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pedida = searchParams.get('categoria');
+  const categoria = nombreCategoria(pedida) ? pedida : null;
+
+  // Cuántos modelos hay en cada categoría (un modelo puede estar en dos)
+  const conteo = {};
+  for (const p of productos) for (const c of categoriasDe(p.cod_modelo)) conteo[c] = (conteo[c] || 0) + 1;
+  const pestanas = CATEGORIAS.filter(c => conteo[c.slug] > 0 || c.slug === categoria);
+  const visibles = categoria ? productos.filter(p => categoriasDe(p.cod_modelo).includes(categoria)) : productos;
+
+  // En celular, la pestaña elegida se desliza a la vista
+  useEffect(() => {
+    if (loading) return;
+    const tab = document.querySelector('.categoria-tab.activa');
+    const fila = tab?.parentElement;
+    if (tab && fila && fila.scrollWidth > fila.clientWidth) {
+      fila.scrollTo({ left: tab.offsetLeft - (fila.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
+    }
+  }, [categoria, loading]);
+
+  function elegirCategoria(slug) {
+    router.replace(slug ? `/catalogo?categoria=${slug}` : '/catalogo', { scroll: false });
+  }
 
   useEffect(() => {
     cargarProductos();
@@ -74,15 +100,36 @@ export default function CatalogoPage() {
     <div className="catalogo-page">
       <header className="wrap catalogo-cabecera">
         <div>
-          <h1 className="t-display catalogo-titulo">Catálogo</h1>
+          <h1 className="t-display catalogo-titulo">{categoria ? nombreCategoria(categoria) : 'Catálogo'}</h1>
           <p className="catalogo-intro">Polos de caballero confeccionados en nuestro propio taller.</p>
         </div>
         <p className="catalogo-conteo" aria-live="polite">
-          {loading ? 'Cargando modelos…' : `${productos.length} ${productos.length === 1 ? 'modelo disponible' : 'modelos disponibles'}${tallaFiltro ? ` en talla ${tallaFiltro}` : ''}`}
+          {loading ? 'Cargando modelos…' : `${visibles.length} ${visibles.length === 1 ? 'modelo disponible' : 'modelos disponibles'}${tallaFiltro ? ` en talla ${tallaFiltro}` : ''}`}
         </p>
       </header>
 
       <div className="catalogo-barra">
+        <nav className="wrap categorias-tabs" aria-label="Categorías">
+          <button
+            type="button"
+            className={`categoria-tab ${!categoria ? 'activa' : ''}`}
+            aria-current={!categoria ? 'page' : undefined}
+            onClick={() => elegirCategoria(null)}
+          >
+            Todos{!loading && <span className="categoria-tab-n">{productos.length}</span>}
+          </button>
+          {pestanas.map(c => (
+            <button
+              key={c.slug}
+              type="button"
+              className={`categoria-tab ${categoria === c.slug ? 'activa' : ''}`}
+              aria-current={categoria === c.slug ? 'page' : undefined}
+              onClick={() => elegirCategoria(c.slug)}
+            >
+              {c.nombre}{!loading && <span className="categoria-tab-n">{conteo[c.slug] || 0}</span>}
+            </button>
+          ))}
+        </nav>
         <div className="wrap catalogo-barra-inner">
           <div className="tallas-filtro" role="group" aria-label="Filtrar por talla">
             <span className="tallas-filtro-label">Tu talla</span>
@@ -110,14 +157,19 @@ export default function CatalogoPage() {
           <div className="productos-grid">
             {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        ) : productos.length === 0 ? (
+        ) : visibles.length === 0 ? (
           <div className="vacio">
-            <p>No hay modelos disponibles en talla {tallaFiltro} por ahora.</p>
-            <button className="btn btn-linea" onClick={() => setTallaFiltro(null)}>Ver todas las tallas</button>
+            <p>
+              No hay modelos{categoria ? ` de ${nombreCategoria(categoria).toLowerCase()}` : ''} disponibles
+              {tallaFiltro ? ` en talla ${tallaFiltro}` : ''} por ahora.
+            </p>
+            {tallaFiltro
+              ? <button className="btn btn-linea" onClick={() => setTallaFiltro(null)}>Ver todas las tallas</button>
+              : <button className="btn btn-linea" onClick={() => elegirCategoria(null)}>Ver todos los modelos</button>}
           </div>
         ) : (
           <div className="productos-grid">
-            {productos.map((p, i) => (
+            {visibles.map((p, i) => (
               <ProductoCard
                 key={p.id}
                 producto={p}
