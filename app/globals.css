@@ -905,9 +905,10 @@ p { text-wrap: pretty; }
 }
 /* Computadora: el tubo de la foto va de x≈23% a x≈77%; su borde superior está a y≈19.8% */
 .colgador-tubo {
-  --alto: 56cqh; --w-activa: 42cqh;
+  /* tamaño de las prendas (reducido 25%) */
+  --alto: 42cqh; --w-activa: 31.5cqh;
   /* espacio de cada prenda de perfil: nunca menos que lo que ocupa su nombre */
-  --w: min(max(19cqh, 9.6rem), calc((52cqw - var(--w-activa)) / (var(--n) - 1)));
+  --w: min(max(14.25cqh, 9.6rem), calc((52cqw - var(--w-activa)) / (var(--n) - 1)));
   position: absolute; left: 23%; width: 54%; top: 19.2%;
   display: flex; justify-content: center; z-index: 4;
 }
