@@ -11,6 +11,7 @@ export default async function sitemap() {
   const fijas = [
     { url: BASE, lastModified: ahora, changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE}/catalogo`, lastModified: ahora, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/por-mayor`, lastModified: ahora, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/guia-de-tallas`, lastModified: ahora, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/contacto`, lastModified: ahora, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${BASE}/politica-devoluciones`, lastModified: ahora, changeFrequency: 'yearly', priority: 0.3 },

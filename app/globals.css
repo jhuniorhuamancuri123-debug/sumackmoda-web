@@ -564,7 +564,7 @@ p { text-wrap: pretty; }
    Pie de página
    ============================================================= */
 .footer { background: var(--carbon); color: rgba(246,245,242,0.7); padding: clamp(3.5rem, 7vw, 5.5rem) 0 2rem; }
-.footer-inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+.footer-inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
 .footer-logo { width: 190px; color: var(--papel); margin-bottom: 1.25rem; }
 .footer-logo svg { width: 100%; height: auto; display: block; }
 .footer-brand p { font-family: var(--serif); font-size: 1.1rem; line-height: 1.5; color: rgba(246,245,242,0.8); max-width: 30ch; margin-bottom: 1.5rem; }
@@ -1003,4 +1003,76 @@ p { text-wrap: pretty; }
 .categoria-tab:focus-visible { outline: 1px solid var(--carbon); outline-offset: 2px; }
 @media (max-width: 700px) {
   .categoria-tab { font-size: 0.88rem; padding: 0.85rem 0 0.75rem; }
+}
+
+/* El H1 del inicio es la frase del hero (para Google); mantiene el estilo de texto, no de título */
+h1.hero-frase { font-weight: 400; margin: 0; }
+.contacto-tiendas-titulo { margin: 3rem 0 1.25rem; }
+
+/* Con "Por mayor" el menú tiene 5 enlaces: en pantallas medianas se junta y se omite "Inicio" (el logo ya lleva al inicio) */
+@media (max-width: 1180px) and (min-width: 901px) {
+  .navbar-links { gap: 1.25rem; }
+  .navbar-links a[href="/"] { display: none; }
+}
+
+/* =============================================================
+   Por mayor
+   ============================================================= */
+.mayor-eyebrow { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tabaco); margin-bottom: 0.9rem; }
+.mayor-cabecera .catalogo-intro strong { color: var(--carbon); font-weight: 600; font-family: inherit; }
+.mayor-cta-general { gap: 0.55rem; white-space: nowrap; }
+.mayor-pasos { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--hilo); margin-bottom: 2.5rem; }
+.mayor-paso { padding: 1.5rem 1.5rem 1.6rem 0; }
+.mayor-paso + .mayor-paso { padding-left: 1.5rem; border-left: 1px solid var(--hilo); }
+.mayor-paso-n { font-size: 0.8rem; font-weight: 600; color: var(--tabaco); font-variant-numeric: tabular-nums; }
+.mayor-paso h2 { font-stretch: 110%; font-weight: 600; font-size: 1.08rem; margin: 0.4rem 0 0.35rem; }
+.mayor-paso p { color: var(--gris-texto); font-size: 0.93rem; max-width: 34ch; }
+.mayor-card { display: flex; flex-direction: column; }
+.mayor-nombre { font-size: 0.98rem; text-transform: none; }
+.mayor-detalle { font-size: 0.85rem; color: var(--carbon); margin: 0.25rem 0 0.15rem; }
+.mayor-colores { font-size: 0.8rem; color: var(--gris-texto); line-height: 1.4; margin-bottom: 0.9rem; flex: 1; }
+.mayor-btn { gap: 0.45rem; font-size: 0.85rem; padding-left: 0.5rem; padding-right: 0.5rem; margin-top: auto; }
+.mayor-badge-pedido { background: var(--carbon); color: var(--papel); }
+.mayor-info { display: grid; grid-template-columns: 1.6fr 1fr; gap: clamp(2rem, 5vw, 5rem); }
+.mayor-faq { margin-top: 1.5rem; border-top: 1px solid var(--hilo); }
+.mayor-faq > div { padding: 1.2rem 0; border-bottom: 1px solid var(--hilo); }
+.mayor-faq dt { font-weight: 600; margin-bottom: 0.35rem; }
+.mayor-faq dd { color: var(--gris-texto); font-size: 0.95rem; max-width: 60ch; }
+.mayor-tiendas p { margin: 1.25rem 0 0.75rem; }
+.mayor-tiendas ul { list-style: none; padding: 0; margin: 0 0 1.5rem; color: var(--gris-texto); }
+.mayor-tiendas li { padding: 0.3rem 0; }
+@media (max-width: 900px) {
+  .mayor-pasos, .mayor-info { grid-template-columns: 1fr; }
+  .mayor-paso + .mayor-paso { padding-left: 0; border-left: 0; border-top: 1px solid var(--hilo); }
+  .mayor-cabecera { grid-template-columns: 1fr; }
+  .mayor-cta-general { justify-self: start; }
+}
+@media (max-width: 640px) {
+  .mayor-btn { font-size: 0.78rem; min-height: 46px; gap: 0.35rem; }
+  .mayor-colores { font-size: 0.76rem; }
+}
+
+/* =============================================================
+   Ofertas de la semana (app/lib/ofertas.js)
+   ============================================================= */
+.precio-antes { color: var(--gris-texto); font-weight: 400; margin-right: 0.4rem; text-decoration-thickness: 1px; }
+.precio-oferta { color: #a3372b; font-weight: 600; }
+.oferta-badge { left: auto; right: 0.75rem; background: #a3372b; color: #fff; }
+.producto-card .oferta-restante { font-size: 0.76rem; color: #a3372b; margin-top: 0.15rem; }
+.ficha-oferta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+.oferta-etiqueta { background: #a3372b; color: #fff; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.25rem 0.55rem; }
+.ficha-oferta .oferta-restante { font-size: 0.85rem; color: #a3372b; font-weight: 500; }
+.ficha-precio .precio-antes { font-size: 1.05rem; }
+
+/* Botón Volver de la ficha */
+.ficha-migas { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.boton-volver {
+  display: inline-flex; align-items: center; gap: 0.3rem; min-height: 40px; padding: 0 0.9rem 0 0.55rem;
+  font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--carbon);
+  background: transparent; border: 1px solid var(--hilo); border-radius: 999px; cursor: pointer;
+  transition: background 0.25s, border-color 0.25s;
+}
+.boton-volver:hover { background: var(--carbon); color: var(--papel); border-color: var(--carbon); }
+@media (max-width: 640px) {
+  .ficha-migas nav { display: none; } /* en celular sólo el botón, más limpio */
 }

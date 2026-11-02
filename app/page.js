@@ -7,14 +7,15 @@ import Colgador from './components/Colgador';
 import { IconoWA } from './components/SiteFooter';
 import { RESENAS } from './data/resenas';
 import { RESENAS_EJEMPLO } from './data/resenas-ejemplo';
-import { GARANTIAS, WHATSAPP } from './data/marca';
+import { GARANTIAS, WHATSAPP, TIENDAS, GALERIA, MAPA, DIRECCION_CORTA, STANDS, WHATSAPP_VISIBLE, INSTAGRAM, TIKTOK } from './data/marca';
 
 export const metadata = {
-  title: 'Inicio | SUMACK - Moda Masculina Premium',
-  description: 'Descubre los mejores polos masculinos premium hechos en Perú. Calidad, estilo y diseño exclusivo.',
+  title: 'Polos para hombre en Gamarra, Lima | SUMACK',
+  description: 'Polos para hombre de algodón: camiseros, cuello chino, cuello V y cuello redondo. Confeccionados en nuestro taller, con tiendas en Gamarra, Lima. Tallas S a XXL y envíos a todo el Perú.',
+  alternates: { canonical: 'https://sumackmoda.com' },
   openGraph: {
-    title: 'Inicio | SUMACK - Moda Masculina Premium',
-    description: 'Polos masculinos premium hechos en Perú.',
+    title: 'Polos para hombre en Gamarra, Lima | SUMACK',
+    description: 'Polos para hombre de algodón confeccionados en nuestro taller. Envíos a todo el Perú.',
     url: 'https://sumackmoda.com',
     images: [{ url: 'https://sumackmoda.com/og-image.jpg' }],
   },
@@ -81,7 +82,7 @@ const RAZONES = [
   { t: 'Envíos a todo el Perú', d: 'Por Shalom sin recargo adicional. Olva, otras agencias o delivery en Lima según tu destino.' },
   { t: 'Te atiende una persona', d: 'Por WhatsApp, de lunes a sábado de 9:00 a 19:00. Resolvemos tallas, colores y envíos.' },
   { t: 'Cambios dentro de 4 días', d: 'Si la talla no fue la correcta, la cambiamos según nuestra política de cambios.' },
-  { t: 'Dos tiendas en Lima', d: 'Puedes visitarnos y ver las prendas en persona antes de decidir.' },
+  { t: 'Tiendas en Gamarra', d: `${DIRECCION_CORTA}: ${STANDS}. Ven a ver y probar las prendas antes de decidir.` },
 ];
 
 // Reseñas reales; si aún no hay, en la PC (modo prueba) se ven las de ejemplo.
@@ -89,20 +90,78 @@ const RAZONES = [
 const ES_PRUEBA = process.env.NODE_ENV === 'development' && RESENAS.length === 0;
 const RESENAS_VISIBLES = RESENAS.length > 0 ? RESENAS : (ES_PRUEBA ? RESENAS_EJEMPLO : []);
 
+// Datos para Google (marca + tiendas físicas): ayudan en búsquedas locales y en Maps.
+function schemaTiendas() {
+  const direccion = {
+    '@type': 'PostalAddress',
+    streetAddress: `${GALERIA.calle}, ${GALERIA.nombre}`,
+    addressLocality: GALERIA.distrito,
+    addressRegion: GALERIA.ciudad,
+    postalCode: GALERIA.codigoPostal,
+    addressCountry: 'PE',
+  };
+  const horario = {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    opens: '09:00',
+    closes: '19:00',
+  };
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://sumackmoda.com/#marca',
+        name: 'SUMACK',
+        url: 'https://sumackmoda.com',
+        logo: 'https://sumackmoda.com/logo-sumack.svg',
+        description: 'Marca peruana de polos para hombre confeccionados en taller propio. Venta por menor y por mayor.',
+        sameAs: [INSTAGRAM, TIKTOK],
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: WHATSAPP_VISIBLE.replace(/\s/g, ''),
+          contactType: 'sales',
+          areaServed: 'PE',
+          availableLanguage: 'es',
+        },
+      },
+      ...TIENDAS.map((t, i) => ({
+        '@type': 'ClothingStore',
+        '@id': `https://sumackmoda.com/#tienda-${i + 1}`,
+        name: `SUMACK - ${t.nombre}`,
+        description: `Tienda de polos para hombre en ${GALERIA.nombre}, ${t.piso}, ${t.stand}.`,
+        url: 'https://sumackmoda.com',
+        image: 'https://sumackmoda.com/og-image.jpg',
+        telephone: WHATSAPP_VISIBLE.replace(/\s/g, ''),
+        priceRange: 'S/ 20 - S/ 45',
+        address: { ...direccion, streetAddress: `${GALERIA.calle}, ${GALERIA.nombre}, ${t.piso}, ${t.stand}` },
+        geo: { '@type': 'GeoCoordinates', latitude: GALERIA.lat, longitude: GALERIA.lng },
+        hasMap: MAPA,
+        openingHoursSpecification: horario,
+        parentOrganization: { '@id': 'https://sumackmoda.com/#marca' },
+      })),
+    ],
+  };
+}
+
 export default async function Home() {
   const destacados = await getProductosDestacados();
   const cinta = [...GARANTIAS, ...GARANTIAS];
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaTiendas()).replace(/</g, '\\u003c') }}
+      />
       {/* HERO: el logo se arma pieza por pieza y una costura lo subraya */}
       <section className="hero hero-mesa sobre-oscuro">
         <div className="hero-texto">
-          <h1 className="hero-logo">
+          <div className="hero-logo">
             <Logo animado titulo="SUMACK" />
-          </h1>
+          </div>
           <div className="hero-costura" aria-hidden="true" />
-          <p className="hero-frase">Polos de caballero hechos con oficio, del corte a la última costura.</p>
+          <h1 className="hero-frase">Polos para hombre hechos en nuestro taller, del corte a la última costura.</h1>
           <p className="hero-sub">
             Diseñamos y confeccionamos nuestros propios modelos. Eliges color y talla,
             confirmas tu pedido por WhatsApp y lo enviamos a todo el Perú.

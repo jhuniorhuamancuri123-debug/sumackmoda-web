@@ -6,8 +6,10 @@ import Link from 'next/link';
   import { useToast } from '../../context/ToastContext';
   import ProductoImg from '../../components/ProductoImg';
 import Logo from '../../components/Logo';
+import BotonVolver from '../../components/BotonVolver';
 import Recomendados, { registrarVisto } from '../../components/Recomendados';
 import { IconoWA } from '../../components/SiteFooter';
+import { useOferta, montoOferta } from '../../lib/ofertas';
 import { AnimatePresence, motion } from 'motion/react';
 
   const TALLAS_ORDEN = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -52,6 +54,7 @@ import { AnimatePresence, motion } from 'motion/react';
     const colorSeleccionado = colores[colorIndex]?.cod_color || null;
     const colorActual = colores[colorIndex] || null;
     const codModelo = slug.toUpperCase();
+    const oferta = useOferta(codModelo);
 
     const imgUrl = colorSeleccionado
       ? `${process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL}/${codModelo}/${colorSeleccionado}.webp`
@@ -375,6 +378,7 @@ import { AnimatePresence, motion } from 'motion/react';
     const precioActual = itemSeleccionado?.precio
       || tallasInfo.find(t => t.disponible)?.precio || 0;
     const hayMultiplesPrecios = [...new Set(tallasInfo.map(t => t.precio))].length > 1;
+    const montoAnterior = montoOferta(codModelo);
     const r2 = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL;
     const puedeAgregar = !!itemSeleccionado && itemSeleccionado.stock > 0 && !agregando;
     const textoBoton = agregando ? 'Agregado al carrito'
@@ -449,9 +453,12 @@ import { AnimatePresence, motion } from 'motion/react';
         </AnimatePresence>
 
         <div className="wrap">
-          <nav className="ficha-migas" aria-label="Ruta">
-            <Link href="/catalogo">Catálogo</Link> / <span style={{ textTransform: 'capitalize' }}>{nombreModelo.toLowerCase()}</span>
-          </nav>
+          <div className="ficha-migas">
+            <BotonVolver />
+            <nav aria-label="Ruta">
+              <Link href="/catalogo">Catálogo</Link> / <span style={{ textTransform: 'capitalize' }}>{nombreModelo.toLowerCase()}</span>
+            </nav>
+          </div>
 
           <div className="ficha-grid">
             {/* GALERÍA */}
@@ -554,9 +561,16 @@ import { AnimatePresence, motion } from 'motion/react';
 
             {/* DERECHA: precio, color, talla y compra */}
             <div className="ficha-col-compra">
+                {oferta && (
+                  <p className="ficha-oferta">
+                    <span className="oferta-etiqueta">Oferta de la semana</span>
+                    <span className="oferta-restante">{oferta.restante}</span>
+                  </p>
+                )}
                 <p className="ficha-precio">
                   {hayMultiplesPrecios && !tallaSeleccionada && <small>Desde</small>}
-                  S/ {Number(precioActual).toFixed(2)}
+                  {oferta && <s className="precio-antes">S/ {(Number(precioActual) + montoAnterior).toFixed(2)}</s>}
+                  <span className={oferta ? 'precio-oferta' : undefined}>S/ {Number(precioActual).toFixed(2)}</span>
                 </p>
                 {hayMultiplesPrecios && (
                   <p className="ficha-precio-nota">

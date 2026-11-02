@@ -11,6 +11,7 @@ import { WHATSAPP, WHATSAPP_VISIBLE, HORARIO } from '../data/marca';
 const LINKS = [
   { href: '/', label: 'Inicio', nota: 'La marca' },
   { href: '/catalogo', label: 'Catálogo', nota: 'Todos los modelos' },
+  { href: '/por-mayor', label: 'Por mayor', nota: 'Desde 12 unidades' },
   { href: '/guia-de-tallas', label: 'Guía de tallas', nota: 'Medidas' },
   { href: '/contacto', label: 'Contacto', nota: 'WhatsApp' },
 ];

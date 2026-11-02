@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 import ProductoCard from '../components/ProductoCard';
+import { posicionAlVolver } from '../lib/volver';
 import { CATEGORIAS, categoriasDe, nombreCategoria } from '../data/categorias';
 
 const TALLAS = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -12,6 +13,8 @@ export default function CatalogoPage() {
   const [productos, setProductos] = useState([]);
   const [tallaFiltro, setTallaFiltro] = useState('S');
   const [loading, setLoading] = useState(true);
+  const [listo, setListo] = useState(false);
+  const volverA = useRef(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pedida = searchParams.get('categoria');
@@ -37,9 +40,30 @@ export default function CatalogoPage() {
     router.replace(slug ? `/catalogo?categoria=${slug}` : '/catalogo', { scroll: false });
   }
 
+  // Al abrir: recuperar la talla elegida en esta visita y, si viene de "Volver",
+  // la posición donde estaba
   useEffect(() => {
+    volverA.current = posicionAlVolver();
+    try {
+      const t = sessionStorage.getItem('sumack-talla');
+      if (t !== null) setTallaFiltro(t === '' ? null : t);
+    } catch {}
+    setListo(true);
+  }, []);
+
+  useEffect(() => {
+    if (!listo) return;
+    try { sessionStorage.setItem('sumack-talla', tallaFiltro || ''); } catch {}
     cargarProductos();
-  }, [tallaFiltro]);
+  }, [tallaFiltro, listo]);
+
+  // Cuando ya se ven los modelos, regresar al punto donde el cliente abrió uno
+  useEffect(() => {
+    if (loading || volverA.current == null) return;
+    const y = volverA.current;
+    volverA.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
+  }, [loading]);
 
   async function cargarProductos() {
     setLoading(true);
@@ -100,7 +124,7 @@ export default function CatalogoPage() {
     <div className="catalogo-page">
       <header className="wrap catalogo-cabecera">
         <div>
-          <h1 className="t-display catalogo-titulo">{categoria ? nombreCategoria(categoria) : 'Catálogo'}</h1>
+          <h1 className="t-display catalogo-titulo">{categoria ? nombreCategoria(categoria) : 'Polos para hombre'}</h1>
           <p className="catalogo-intro">Polos de caballero confeccionados en nuestro propio taller.</p>
         </div>
         <p className="catalogo-conteo" aria-live="polite">

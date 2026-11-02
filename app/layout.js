@@ -23,9 +23,8 @@ const newsreader = Newsreader({
 });
 
 export const metadata = {
-  title: 'SUMACK - Moda Masculina Premium',
-  description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú. Envíos a todo el país.',
-  keywords: 'polos peruanos, moda masculina Lima, polos premium Perú, ropa hombre Lima, marca peruana de polos',
+  title: 'SUMACK | Polos para hombre hechos en Perú',
+  description: 'Polos para hombre de algodón: camiseros, cuello chino, cuello V y cuello redondo. Confeccionados en nuestro taller, con tiendas en Gamarra, Lima. Tallas S a XXL y envíos a todo el Perú.',
   // Evita que Safari (iPhone) convierta teléfonos y horarios en enlaces automáticos
   formatDetection: { telephone: false, date: false, address: false, email: false },
   verification: {
@@ -37,8 +36,8 @@ export const metadata = {
   },
 
   openGraph: {
-    title: 'SUMACK - Moda Masculina Premium',
-    description: 'Marca peruana de polos y prendas masculinas premium. Diseñados y fabricados en Perú.',
+    title: 'SUMACK | Polos para hombre hechos en Perú',
+    description: 'Polos para hombre de algodón confeccionados en nuestro taller. Tiendas en Gamarra y envíos a todo el Perú.',
     url: 'https://sumackmoda.com',
     siteName: 'SUMACK',
     images: [

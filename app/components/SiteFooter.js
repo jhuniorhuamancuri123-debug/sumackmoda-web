@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Logo from './Logo';
-import { WHATSAPP, WHATSAPP_VISIBLE, INSTAGRAM, TIKTOK, HORARIO } from '../data/marca';
+import { WHATSAPP, WHATSAPP_VISIBLE, INSTAGRAM, TIKTOK, HORARIO, TIENDAS, GALERIA, MAPA } from '../data/marca';
 
 const IconoIG = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
@@ -29,9 +29,16 @@ export default function SiteFooter() {
           <div className="footer-col">
             <h4>Tienda</h4>
             <Link href="/catalogo">Catálogo</Link>
+            <Link href="/por-mayor">Por mayor</Link>
             <Link href="/guia-de-tallas">Guía de tallas</Link>
             <Link href="/contacto">Contacto</Link>
             <Link href="/politica-devoluciones">Cambios y devoluciones</Link>
+          </div>
+          <div className="footer-col">
+            <h4>Tiendas</h4>
+            <p>{GALERIA.nombre}<br />{GALERIA.calle}, {GALERIA.distrito}</p>
+            {TIENDAS.map(t => <p key={t.stand}>{t.piso} · {t.stand}</p>)}
+            <a href={MAPA} target="_blank" rel="noopener">Ver en Google Maps</a>
           </div>
           <div className="footer-col">
             <h4>Atención</h4>
@@ -43,7 +50,7 @@ export default function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <p>© 2026 SUMACK. Todos los derechos reservados.</p>
-          <p>Lima, Perú</p>
+          <p>Gamarra, La Victoria · Lima, Perú</p>
         </div>
       </div>
     </footer>
