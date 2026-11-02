@@ -32,11 +32,28 @@ const cargarModelo = cache(async (slug) => {
     const precios = items.map((i) => Number(i.precio)).filter((p) => p > 0);
     const imagenes = R2 ? colores.map((c) => `${R2}/${cod}/${c.cod}.webp`) : [];
 
+    // La descripción suele empezar con "Polo Cuello Chino — 100% Algodón ...":
+    // la primera parte es el tipo de prenda, que es lo que la gente busca en Google.
+    const descCompleta = (modelo?.descripcion || '').trim();
+    const partes = descCompleta.split(/\s+[—–-]\s+/);
+    const tipo = partes.length > 1 && partes[0].length <= 40 ? partes[0].trim() : '';
+    // Si el nombre de Alegra ya comparte alguna palabra con el tipo (NERU FIRMA → "Polo Cuello Chino Firma")
+    // o viene abreviado (ESTAMP.), se usa sólo el tipo. Si no (NERU), se agrega: "Polo Cuello Chino Neru".
+    const norm = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    const palabrasTipo = norm(tipo).split(/[^A-Z0-9]+/).filter(Boolean);
+    const palabrasNombre = norm(nombre).split(/[^A-Z0-9]+/).filter((w) => w.length >= 2);
+    const comparte = palabrasNombre.some((w) => palabrasTipo.some((t) => t.startsWith(w)));
+    const abreviado = /[.\/(]/.test(nombre);
+    const nombreBonito = nombre.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+    const nombreSEO = tipo ? (comparte || abreviado ? tipo : `${tipo} ${nombreBonito}`) : nombreBonito;
+
     return {
       cod,
       existe: colores.length > 0,
       nombre,
-      descripcion: (modelo?.descripcion || '').trim(),
+      nombreSEO,
+      tipo,
+      descripcion: descCompleta,
       colores,
       imagenes,
       precioMin: precios.length ? Math.min(...precios) : null,
@@ -75,7 +92,8 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const titulo = `${m.nombre} | SUMACK Polos para hombre`;
+  const publico = /\b(dama|mujer)\b/i.test(m.nombreSEO) ? 'para mujer' : 'para hombre';
+  const titulo = `${m.nombreSEO} ${publico} | SUMACK`;
   const descripcion = textoDescripcion(m);
 
   return {
@@ -89,7 +107,7 @@ export async function generateMetadata({ params }) {
       description: descripcion,
       siteName: 'SUMACK',
       locale: 'es_PE',
-      images: m.imagenes.slice(0, 4).map((url) => ({ url, alt: m.nombre })),
+      images: m.imagenes.slice(0, 4).map((url) => ({ url, alt: m.nombreSEO })),
     },
     twitter: {
       card: 'summary_large_image',
@@ -110,7 +128,7 @@ export default async function FichaLayout({ children, params }) {
     schema = {
       '@context': 'https://schema.org',
       '@type': 'Product',
-      name: m.nombre,
+      name: m.nombreSEO,
       sku: m.cod,
       url,
       image: m.imagenes,
